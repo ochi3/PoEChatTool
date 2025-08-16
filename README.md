@@ -1,6 +1,6 @@
 # ぽえちゃっと (PoEChatTool)
 
-**ぽえちゃっと** は、Path of Exile 1 (PoE1) のクライアントログを監視して、  
+**ぽえちゃっと** は、Path of Exileのクライアントログを監視して、  
 リアルタイムで **チャットの表示・音声読み上げ・翻訳** を行うツールです。
 
 ---
@@ -46,9 +46,13 @@
 #### 1. ログファイルの設定
 - メニューバー → 「ファイル」→「設定」
 - 「ログファイル」→「参照」ボタンから以下を指定  
-
+PoE1
 スタンドアロン版: `C:/Program Files (x86)/Grinding Gear Games/Path of Exile/logs/Client.txt`  
 Steam版 : `C:/Program Files (x86)/Steam/steamapps/common/Path of Exile/logs/Client.txt`
+
+PoE2
+スタンドアロン版: `C:/Program Files (x86)/Grinding Gear Games/Path of Exile 2/logs/Client.txt`  
+Steam版 : `C:/Program Files (x86)/Steam/steamapps/common/Path of Exile 2/logs/Client.txt`
 
 #### 2. 音声設定（VOICEVOX利用）
 1. [VOICEVOX公式サイト](https://voicevox.hiroshiba.jp/) からZIPをダウンロード  
