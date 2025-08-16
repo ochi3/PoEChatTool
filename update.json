@@ -1,6 +1,6 @@
 {
-    "version": "1.0.1",
+    "version": "1.0.2",
     "release_date": "2025-08-16",
-    "changelog": "• 初期リリース",
-    "download_url": "https://github.com/ochi3/PoEChatTool/releases/download/v1.0.0/PoEChat.exe"
+    "changelog": "• Voicevox起動時エラーの修正",
+    "download_url": "https://github.com/ochi3/PoEChatTool/releases/download/v1.0.2/poechat.zip"
 }

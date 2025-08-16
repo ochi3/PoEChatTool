@@ -18,6 +18,7 @@ import sys
 import ctypes
 import urllib.request
 import shutil
+import webbrowser
 
 # アイコン設定用のWindows API
 myappid = 'poechattool'
@@ -25,7 +26,50 @@ myappid = 'poechattool'
 class PoEChatTool:
     def __init__(self):
         # バージョン情報
-        self.version = "1.0.1"
+        self.version = "1.0.2"
+        # 設定ファイルのパスを設定
+        self.voicevox_speakers = {
+            'ずんだもん': {'ノーマル': 3, 'あまあま': 1, 'ツンツン': 7, 'セクシー': 5, 'ささやき': 22, 'ヒソヒソ': 38, 'ヘロヘロ': 75, 'なみだめ': 76},
+            '四国めたん': {'ノーマル': 2, 'あまあま': 0, 'ツンツン': 6, 'セクシー': 4, 'ささやき': 36, 'ヒソヒソ': 37},
+            '春日部つむぎ': {'ノーマル': 8},
+            '中国うさぎ': {'ノーマル': 61, 'おどろき': 62, 'こわがり': 63, 'へろへろ': 64},
+            '雨晴はう': {'ノーマル': 10},
+            '冥鳴ひまり': {'ノーマル': 14},
+            '東北ずん子': {'ノーマル': 107},
+            '東北きりたん': {'ノーマル': 108},
+            '東北イタコ': {'ノーマル': 109},
+            '栄田まめん': {'ノーマル': 67},
+            '波音リツ': {'ノーマル': 9, 'クイーン': 65},
+            '玄野武宏': {'ノーマル': 11, '喜び': 39, 'ツンギレ': 40, '悲しみ': 41},
+            '白上虎太郎': {'ふつう': 12, 'わーい': 32, 'びくびく': 33, 'おこ': 34, 'びえーん': 35},
+            '青山龍星': {'ノーマル': 13, '熱血': 81, '不機嫌': 82, '喜び': 83, 'しっとり': 84, 'かなしみ': 85, '囁き': 86},
+            '九州そら': {'ノーマル': 16, 'あまあま': 15, 'ツンツン': 18, 'セクシー': 17, 'ささやき': 19},
+            'もち子さん': {'ノーマル': 20, 'セクシー♡あん子': 66, '泣き': 77, '怒り': 78, '喜び': 79, 'のんびり': 80},
+            '剣崎雌雄': {'ノーマル': 21},
+            'WhiteCUL': {'ノーマル': 23, 'たのしい': 24, 'かなしい': 25, 'びえーん': 26},
+            '後鬼': {'人間ver.': 27, 'ぬいぐるみver.': 28, '人間（怒り）ver.': 87, '鬼ver.': 88},
+            'No.7': {'ノーマル': 29, 'アナウンス': 30, '読み聞かせ': 31},
+            'ちび式じい': {'ノーマル': 42},
+            '櫻歌ミコ': {'ノーマル': 43, '第二形態': 44, 'ロリ': 45},
+            '小夜/SAYO': {'ノーマル': 46},
+            'ナースロボ＿タイプＴ': {'ノーマル': 47, '楽々': 48, '恐怖': 49, '内緒話': 50},
+            '†聖騎士 紅桜†': {'ノーマル': 51},
+            '雀松朱司': {'ノーマル': 52},
+            '麒ヶ島宗麟': {'ノーマル': 53},
+            '春歌ナナ': {'ノーマル': 54},
+            '猫使アル': {'ノーマル': 55, 'おちつき': 56, 'うきうき': 57, 'つよつよ': 110, 'へろへろ': 111},
+            '猫使ビィ': {'ノーマル': 58, 'おちつき': 59, '人見知り': 60, 'つよつよ': 112},
+            'あいえるたん': {'ノーマル': 68},
+            '満別花丸': {'ノーマル': 69, '元気': 70, 'ささやき': 71, 'ぶりっ子': 72, 'ボーイ': 73},
+            '琴詠ニア': {'ノーマル': 74},
+            'Voidoll': {'ノーマル': 89},
+            'ずぼん子': {'ノーマル': 90, '低血圧': 91, '覚醒': 92, '実況風': 93},
+            '中部つるぎ': {'ノーマル': 94, '怒り': 95, 'ヒソヒソ': 96, 'おどおど': 97, '絶望と敗北': 98},
+            '離縁': {'ノーマル': 99, 'シリアス': 101},
+            '黒沢冴白': {'ノーマル': 100},
+            'ユーレイちゃん': {'ノーマル': 102, '甘々': 103, '哀しみ': 104, 'ささやき': 105, 'ツクモちゃん': 106}
+        }
+        
         # 設定ファイルのパスを設定
         if getattr(sys, 'frozen', False):
             # EXEが実行されている場合
@@ -44,6 +88,7 @@ class PoEChatTool:
             self.config_file = os.path.join(script_dir, "poe_chat_config.json")
         
         print(f"設定ファイルパス: {self.config_file}")  # デバッグ用
+        
         self.config = self.load_config()
         self.tts_engine = None
         self.main_window = None
@@ -309,10 +354,23 @@ class PoEChatTool:
         
         self.chat_text.tag_config('translation_button', foreground='#00BFFF', underline=True)
         self.chat_text.tag_config('translation_result', foreground='#00FF00')
+        self.chat_text.tag_config('update_url', foreground='#FFD700', underline=True)
+        
+        # URLクリック用のバインド
+        self.chat_text.tag_bind('update_url', '<Button-1>', self.open_update_url)
+        self.chat_text.tag_bind('update_url', '<Enter>', lambda e: self.chat_text.config(cursor="hand2"))
+        self.chat_text.tag_bind('update_url', '<Leave>', lambda e: self.chat_text.config(cursor=""))
             
         # ログファイルがある場合、監視を開始
         if self.config['log_file_path'] and os.path.exists(self.config['log_file_path']) and self.monitoring_enabled:
             self.start_monitoring()
+    
+    def open_update_url(self, event=None):
+        """アップデートURLを開く"""
+        try:
+            webbrowser.open("https://github.com/ochi3/PoEChatTool/releases")
+        except Exception as e:
+            print(f"URL表示エラー: {e}")
     
     def toggle_monitoring(self):
         self.monitoring_enabled = not self.monitoring_enabled
@@ -576,7 +634,7 @@ class PoEChatTool:
             '白上虎太郎': {'ふつう': 12, 'わーい': 32, 'びくびく': 33, 'おこ': 34, 'びえーん': 35},
             '青山龍星': {'ノーマル': 13, '熱血': 81, '不機嫌': 82, '喜び': 83, 'しっとり': 84, 'かなしみ': 85, '囁き': 86},
             '九州そら': {'ノーマル': 16, 'あまあま': 15, 'ツンツン': 18, 'セクシー': 17, 'ささやき': 19},
-            'もち子さん': {'ノーマル': 20, 'セクシー／あん子': 66, '泣き': 77, '怒り': 78, '喜び': 79, 'のんびり': 80},
+            'もち子さん': {'ノーマル': 20, 'セクシー♡あん子': 66, '泣き': 77, '怒り': 78, '喜び': 79, 'のんびり': 80},
             '剣崎雌雄': {'ノーマル': 21},
             'WhiteCUL': {'ノーマル': 23, 'たのしい': 24, 'かなしい': 25, 'びえーん': 26},
             '後鬼': {'人間ver.': 27, 'ぬいぐるみver.': 28, '人間（怒り）ver.': 87, '鬼ver.': 88},
@@ -595,9 +653,9 @@ class PoEChatTool:
             '満別花丸': {'ノーマル': 69, '元気': 70, 'ささやき': 71, 'ぶりっ子': 72, 'ボーイ': 73},
             '琴詠ニア': {'ノーマル': 74},
             'Voidoll': {'ノーマル': 89},
-            'ぞん子': {'ノーマル': 90, '低血圧': 91, '覚醒': 92, '実況風': 93},
+            'ずぼん子': {'ノーマル': 90, '低血圧': 91, '覚醒': 92, '実況風': 93},
             '中部つるぎ': {'ノーマル': 94, '怒り': 95, 'ヒソヒソ': 96, 'おどおど': 97, '絶望と敗北': 98},
-            '離途': {'ノーマル': 99, 'シリアス': 101},
+            '離縁': {'ノーマル': 99, 'シリアス': 101},
             '黒沢冴白': {'ノーマル': 100},
             'ユーレイちゃん': {'ノーマル': 102, '甘々': 103, '哀しみ': 104, 'ささやき': 105, 'ツクモちゃん': 106}
         }
@@ -928,7 +986,17 @@ class PoEChatTool:
             voicevox_path = self.config['voicevox_path']
             if os.path.exists(voicevox_path):
                 try:
-                    self.voicevox_process = subprocess.Popen([voicevox_path])
+                    # VOICEVOXを隠して起動
+                    startupinfo = subprocess.STARTUPINFO()
+                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                    startupinfo.wShowWindow = subprocess.SW_HIDE
+                    
+                    self.voicevox_process = subprocess.Popen(
+                        [voicevox_path], 
+                        startupinfo=startupinfo,
+                        creationflags=subprocess.CREATE_NO_WINDOW
+                    )
+                    
                     for _ in range(30):
                         time.sleep(1)
                         if self.is_voicevox_running():
@@ -1012,8 +1080,8 @@ class PoEChatTool:
     
     def parse_chat_line(self, line):
         patterns = [
-            r'(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \d+ \w+ $$ INFO Client \d+ $$ ([#%$@&])([^:]+): (.+)',
-            r'(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}).*?$$ INFO Client \d+ $$ ([#%$@&])([^:]+): (.+)',
+            r'(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \d+ \w+ $ INFO Client \d+ $ ([#%$@&])([^:]+): (.+)',
+            r'(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}).*?$ INFO Client \d+ $ ([#%$@&])([^:]+): (.+)',
             r'.*?(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}).*?([#%$@&])([^:]+): (.+)'
         ]
         
@@ -1332,57 +1400,48 @@ class PoEChatTool:
                 update_info = json.loads(response.read().decode())
                 
                 if update_info['version'] > self.version:
+                    update_message = f"新しいバージョン {update_info['version']} が利用可能です。"
+                    
                     if silent:
-                        # サイレントモードでは通知のみ
-                        self.display_system_message(f"新しいバージョン {update_info['version']} が利用可能です")
+                        # サイレントモードではURLと一緒に通知
+                        self.display_system_message_with_url(update_message, "https://github.com/ochi3/PoEChatTool/releases")
                     else:
-                        # アップデート確認ダイアログ
-                        if messagebox.askyesno(
+                        # アップデート確認ダイアログ（URLを開くオプション付き）
+                        result = messagebox.askyesnocancel(
                             "アップデートの確認",
-                            f"新しいバージョン {update_info['version']} が利用可能です。\n今すぐアップデートしますか？"
-                        ):
-                            self.download_and_install_update(update_info)
+                            f"{update_message}\n\nリリースページを開きますか？\n「はい」でページを開く、「いいえ」で閉じる"
+                        )
+                        if result:  # はい
+                            webbrowser.open("https://github.com/ochi3/PoEChatTool/releases")
                 elif not silent:
                     messagebox.showinfo("アップデート", "お使いのバージョンは最新です")
         except Exception as e:
             if not silent:
                 messagebox.showerror("アップデートエラー", f"アップデートの確認に失敗しました:\n{str(e)}")
     
-    def download_and_install_update(self, update_info):
-        """アップデートをダウンロードしてインストールする"""
+    def display_system_message_with_url(self, message, url):
+        """システムメッセージをクリック可能なURLと一緒に表示"""
+        if not self.main_window:
+            return
+        self.main_window.after(0, self._display_system_message_with_url_thread_safe, message, url)
+    
+    def _display_system_message_with_url_thread_safe(self, message, url):
         try:
-            # ダウンロードURL
-            download_url = update_info['download_url']
+            time_str = f"[{datetime.now().strftime('%H:%M')}] " if self.config.get('show_timestamp', True) else ""
+            system_str = f"[システム] {message} "
+            url_str = "ダウンロードページを開く\n"
             
-            # 一時ファイルパス
-            temp_dir = tempfile.gettempdir()
-            temp_exe = os.path.join(temp_dir, "PoEChatTool_Update.exe")
+            self.chat_text.insert(tk.END, time_str, 'その他')
+            self.chat_text.insert(tk.END, system_str, 'その他')
             
-            # ファイルをダウンロード
-            with urllib.request.urlopen(download_url) as response, open(temp_exe, 'wb') as out_file:
-                shutil.copyfileobj(response, out_file)
+            # URL部分を挿入
+            url_start = self.chat_text.index(tk.END)
+            self.chat_text.insert(tk.END, url_str, 'update_url')
             
-            # アップデートスクリプトを作成
-            current_exe = sys.argv[0]
-            batch_script = f"""
-            @echo off
-            TIMEOUT /T 3 /NOBREAK
-            TASKKILL /F /IM "{os.path.basename(current_exe)}"
-            MOVE /Y "{temp_exe}" "{current_exe}"
-            START "" "{current_exe}"
-            DEL "%~f0"
-            """
-            
-            batch_path = os.path.join(temp_dir, "update_script.bat")
-            with open(batch_path, 'w') as f:
-                f.write(batch_script)
-            
-            # アップデートスクリプトを実行
-            subprocess.Popen([batch_path], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
-            self.close_main_window()
-            
+            if self.auto_scroll_var.get() and self.chat_text.yview()[1] >= 0.9:
+                self.chat_text.see(tk.END)
         except Exception as e:
-            messagebox.showerror("アップデートエラー", f"アップデートのダウンロードに失敗しました:\n{str(e)}")
+            print(f"システムメッセージ表示エラー: {e}")
     
     def show_version_info(self):
         """バージョン情報を表示"""
