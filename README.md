@@ -35,7 +35,7 @@
    ※ ウイルス警告が出る場合は許可してください  
    ※ 起動できない場合は、`ぽえちゃっと.exe` を右クリック → プロパティ → 「許可する」を押してください
 
-- 自動アップデート機能あり（失敗する場合はReleasesから再ダウンロード推奨）  
+- 自動アップデート機能はありますが基本はReleasesから再ダウンロード推奨  
 - 設定ファイルは  に保存されるため、再インストールしても設定は維持されます
 
 ---
@@ -47,7 +47,7 @@
 - メニューバー → 「ファイル」→「設定」
 - 「ログファイル」→「参照」ボタンから以下を指定  
 
-スタンドアロン版: C:/Program Files (x86)/Grinding Gear Games/Path of Exile/logs/Client.txt
+スタンドアロン版: C:/Program Files (x86)/Grinding Gear Games/Path of Exile/logs/Client.txt  
 Steam版 : C:/Program Files (x86)/Steam/steamapps/common/Path of Exile/logs/Client.txt
 
 #### 2. 音声設定（VOICEVOX利用）
