@@ -25,7 +25,7 @@ myappid = 'poechattool'
 class PoEChatTool:
     def __init__(self):
         # バージョン情報
-        self.version = "1.0.0"
+        self.version = "1.0.1"
         # 設定ファイルのパスを設定
         if getattr(sys, 'frozen', False):
             # EXEが実行されている場合
@@ -158,9 +158,9 @@ class PoEChatTool:
             'show_translation_buttons': True,
             'auto_start_voicevox': True,
             'voicevox_path': '',
-            'enable_discord': False,
-            'discord_webhook_url': '',
-            'discord_message_format': '[{type}] {username}: {message}',
+            'enable_Webhook': False,
+            'Webhook_webhook_url': '',
+            'Webhook_message_format': '[{type}] {username}: {message}',
             'monitoring_enabled': True,
             'check_for_updates': True
         }
@@ -217,7 +217,7 @@ class PoEChatTool:
     
     def create_main_window(self):
         self.main_window = tk.Tk()
-        self.main_window.title(f"PoE Chat Display Tool v{self.version}")
+        self.main_window.title(f"ぽえちゃっと v{self.version}")
         
         try:
             if getattr(sys, 'frozen', False):
@@ -700,9 +700,9 @@ class PoEChatTool:
         self.translation_service_var = tk.StringVar(value=self.config.get('translation_service', 'google'))
         service_frame = ttk.Frame(translation_frame)
         service_frame.pack(fill="x")
-        ttk.Radiobutton(service_frame, text="Google翻訳 (無料)", variable=self.translation_service_var, value="google").pack(side="left")
-        ttk.Radiobutton(service_frame, text="Google Cloud Translation (有料)", variable=self.translation_service_var, value="google_cloud").pack(side="left", padx=(10, 0))
-        ttk.Radiobutton(service_frame, text="DeepL翻訳 (有料)", variable=self.translation_service_var, value="deepl").pack(side="left", padx=(10, 0))
+        ttk.Radiobutton(service_frame, text="Google翻訳", variable=self.translation_service_var, value="google").pack(side="left")
+        ttk.Radiobutton(service_frame, text="Google Cloud Translation", variable=self.translation_service_var, value="google_cloud").pack(side="left", padx=(10, 0))
+        ttk.Radiobutton(service_frame, text="DeepL翻訳", variable=self.translation_service_var, value="deepl").pack(side="left", padx=(10, 0))
         
         ttk.Label(translation_frame, text="ソース言語:").pack(anchor="w", pady=(5, 0))
         self.source_language_var = tk.StringVar(value=self.config.get('source_language', 'auto'))
@@ -739,26 +739,26 @@ class PoEChatTool:
             variable=self.show_translation_buttons_var
         ).pack(anchor="w", pady=(5, 0))
         
-        # Webhook (Discord) タブ
-        discord_tab = ttk.Frame(notebook)
-        notebook.add(discord_tab, text="Webhook")
+        # Webhook タブ
+        Webhook_tab = ttk.Frame(notebook)
+        notebook.add(Webhook_tab, text="Webhook")
         
-        discord_frame = ttk.LabelFrame(discord_tab, text="Discord設定")
-        discord_frame.pack(fill="x", padx=10, pady=5)
+        Webhook_frame = ttk.LabelFrame(Webhook_tab, text="Webhook設定")
+        Webhook_frame.pack(fill="x", padx=10, pady=5)
         
-        self.enable_discord_var = tk.BooleanVar(value=self.config.get('enable_discord', False))
-        ttk.Checkbutton(discord_frame, text="Discord通知を有効化", variable=self.enable_discord_var).pack(anchor="w")
+        self.enable_Webhook_var = tk.BooleanVar(value=self.config.get('enable_Webhook', False))
+        ttk.Checkbutton(Webhook_frame, text="Webhookを有効化", variable=self.enable_Webhook_var).pack(anchor="w")
         
-        ttk.Label(discord_frame, text="Webhook URL:").pack(anchor="w", pady=(5, 0))
-        self.discord_webhook_url_var = tk.StringVar(value=self.config.get('discord_webhook_url', ''))
-        ttk.Entry(discord_frame, textvariable=self.discord_webhook_url_var, width=50).pack(anchor="w")
+        ttk.Label(Webhook_frame, text="Webhook URL:").pack(anchor="w", pady=(5, 0))
+        self.Webhook_webhook_url_var = tk.StringVar(value=self.config.get('Webhook_webhook_url', ''))
+        ttk.Entry(Webhook_frame, textvariable=self.Webhook_webhook_url_var, width=50).pack(anchor="w")
         
-        ttk.Label(discord_frame, text="メッセージフォーマット:").pack(anchor="w", pady=(5, 0))
-        self.discord_message_format_var = tk.StringVar(
-            value=self.config.get('discord_message_format', '[{timestamp}] [{type}] {username}: {message}'))
-        format_entry = ttk.Entry(discord_frame, textvariable=self.discord_message_format_var, width=50)
+        ttk.Label(Webhook_frame, text="メッセージフォーマット:").pack(anchor="w", pady=(5, 0))
+        self.Webhook_message_format_var = tk.StringVar(
+            value=self.config.get('Webhook_message_format', '[{timestamp}] [{type}] {username}: {message}'))
+        format_entry = ttk.Entry(Webhook_frame, textvariable=self.Webhook_message_format_var, width=50)
         format_entry.pack(anchor="w")
-        ttk.Label(discord_frame, text="使用可能な変数: {timestamp}, {type}, {username}, {message}").pack(anchor="w")
+        ttk.Label(Webhook_frame, text="使用可能な変数: {timestamp}, {type}, {username}, {message}").pack(anchor="w")
         
         # 保存とキャンセルボタン
         button_frame = ttk.Frame(self.settings_window)
@@ -870,9 +870,9 @@ class PoEChatTool:
         self.config['show_translation_buttons'] = self.show_translation_buttons_var.get()
         self.config['auto_start_voicevox'] = self.auto_start_voicevox_var.get()
         self.config['voicevox_path'] = self.voicevox_path_var.get()
-        self.config['enable_discord'] = self.enable_discord_var.get()
-        self.config['discord_webhook_url'] = self.discord_webhook_url_var.get()
-        self.config['discord_message_format'] = self.discord_message_format_var.get()
+        self.config['enable_Webhook'] = self.enable_Webhook_var.get()
+        self.config['Webhook_webhook_url'] = self.Webhook_webhook_url_var.get()
+        self.config['Webhook_message_format'] = self.Webhook_message_format_var.get()
         self.config['font_family'] = self.font_family_var.get()
         self.config['check_for_updates'] = self.check_updates_var.get()
         
@@ -971,14 +971,14 @@ class PoEChatTool:
                 self.display_chat_message(chat_info)
                 if self.tts_enabled_var.get() and self.config['chat_tts_filter'].get(chat_type, True):
                     self.speak_message(chat_info['message'])
-                if self.config.get('enable_discord', False) and self.config.get('discord_webhook_url', ''):
-                    self.send_to_discord(chat_info)
+                if self.config.get('enable_Webhook', False) and self.config.get('Webhook_webhook_url', ''):
+                    self.send_to_Webhook(chat_info)
     
-    def send_to_discord(self, chat_info):
+    def send_to_Webhook(self, chat_info):
         def send_thread():
             try:
-                webhook_url = self.config['discord_webhook_url']
-                format_str = self.config.get('discord_message_format', '[{timestamp}] [{type}] {username}: {message}')
+                webhook_url = self.config['Webhook_webhook_url']
+                format_str = self.config.get('Webhook_message_format', '[{timestamp}] [{type}] {username}: {message}')
                 
                 dt = datetime.strptime(chat_info['timestamp'], '%Y/%m/%d %H:%M:%S')
                 timestamp_short = dt.strftime('%H:%M')
@@ -993,9 +993,9 @@ class PoEChatTool:
                 data = {"content": message}
                 response = requests.post(webhook_url, json=data)
                 if response.status_code != 204:
-                    print(f"Discord送信エラー: {response.status_code} - {response.text}")
+                    print(f"Webhook送信エラー: {response.status_code} - {response.text}")
             except Exception as e:
-                print(f"Discord送信エラー: {e}")
+                print(f"Webhook送信エラー: {e}")
         
         threading.Thread(target=send_thread, daemon=True).start()
     
