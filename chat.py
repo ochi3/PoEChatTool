@@ -20,61 +20,13 @@ import urllib.request
 import shutil
 import webbrowser
 
-# アイコン設定用のWindows API
 myappid = 'poechattool'
 
 class PoEChatTool:
     def __init__(self):
-        # バージョン情報
-        self.version = "1.0.2"
-        # 設定ファイルのパスを設定
-        self.voicevox_speakers = {
-            'ずんだもん': {'ノーマル': 3, 'あまあま': 1, 'ツンツン': 7, 'セクシー': 5, 'ささやき': 22, 'ヒソヒソ': 38, 'ヘロヘロ': 75, 'なみだめ': 76},
-            '四国めたん': {'ノーマル': 2, 'あまあま': 0, 'ツンツン': 6, 'セクシー': 4, 'ささやき': 36, 'ヒソヒソ': 37},
-            '春日部つむぎ': {'ノーマル': 8},
-            '中国うさぎ': {'ノーマル': 61, 'おどろき': 62, 'こわがり': 63, 'へろへろ': 64},
-            '雨晴はう': {'ノーマル': 10},
-            '冥鳴ひまり': {'ノーマル': 14},
-            '東北ずん子': {'ノーマル': 107},
-            '東北きりたん': {'ノーマル': 108},
-            '東北イタコ': {'ノーマル': 109},
-            '栄田まめん': {'ノーマル': 67},
-            '波音リツ': {'ノーマル': 9, 'クイーン': 65},
-            '玄野武宏': {'ノーマル': 11, '喜び': 39, 'ツンギレ': 40, '悲しみ': 41},
-            '白上虎太郎': {'ふつう': 12, 'わーい': 32, 'びくびく': 33, 'おこ': 34, 'びえーん': 35},
-            '青山龍星': {'ノーマル': 13, '熱血': 81, '不機嫌': 82, '喜び': 83, 'しっとり': 84, 'かなしみ': 85, '囁き': 86},
-            '九州そら': {'ノーマル': 16, 'あまあま': 15, 'ツンツン': 18, 'セクシー': 17, 'ささやき': 19},
-            'もち子さん': {'ノーマル': 20, 'セクシー♡あん子': 66, '泣き': 77, '怒り': 78, '喜び': 79, 'のんびり': 80},
-            '剣崎雌雄': {'ノーマル': 21},
-            'WhiteCUL': {'ノーマル': 23, 'たのしい': 24, 'かなしい': 25, 'びえーん': 26},
-            '後鬼': {'人間ver.': 27, 'ぬいぐるみver.': 28, '人間（怒り）ver.': 87, '鬼ver.': 88},
-            'No.7': {'ノーマル': 29, 'アナウンス': 30, '読み聞かせ': 31},
-            'ちび式じい': {'ノーマル': 42},
-            '櫻歌ミコ': {'ノーマル': 43, '第二形態': 44, 'ロリ': 45},
-            '小夜/SAYO': {'ノーマル': 46},
-            'ナースロボ＿タイプＴ': {'ノーマル': 47, '楽々': 48, '恐怖': 49, '内緒話': 50},
-            '†聖騎士 紅桜†': {'ノーマル': 51},
-            '雀松朱司': {'ノーマル': 52},
-            '麒ヶ島宗麟': {'ノーマル': 53},
-            '春歌ナナ': {'ノーマル': 54},
-            '猫使アル': {'ノーマル': 55, 'おちつき': 56, 'うきうき': 57, 'つよつよ': 110, 'へろへろ': 111},
-            '猫使ビィ': {'ノーマル': 58, 'おちつき': 59, '人見知り': 60, 'つよつよ': 112},
-            'あいえるたん': {'ノーマル': 68},
-            '満別花丸': {'ノーマル': 69, '元気': 70, 'ささやき': 71, 'ぶりっ子': 72, 'ボーイ': 73},
-            '琴詠ニア': {'ノーマル': 74},
-            'Voidoll': {'ノーマル': 89},
-            'ずぼん子': {'ノーマル': 90, '低血圧': 91, '覚醒': 92, '実況風': 93},
-            '中部つるぎ': {'ノーマル': 94, '怒り': 95, 'ヒソヒソ': 96, 'おどおど': 97, '絶望と敗北': 98},
-            '離縁': {'ノーマル': 99, 'シリアス': 101},
-            '黒沢冴白': {'ノーマル': 100},
-            'ユーレイちゃん': {'ノーマル': 102, '甘々': 103, '哀しみ': 104, 'ささやき': 105, 'ツクモちゃん': 106}
-        }
-        
-        # 設定ファイルのパスを設定
+        self.version = "1.0.3"
         if getattr(sys, 'frozen', False):
-            # EXEが実行されている場合
             script_dir = os.path.dirname(sys.executable)
-            # AppData/Roamingディレクトリを使用
             appdata_dir = os.getenv('APPDATA')
             if appdata_dir:
                 config_dir = os.path.join(appdata_dir, "PoEChatTool")
@@ -83,32 +35,27 @@ class PoEChatTool:
             else:
                 self.config_file = os.path.join(script_dir, "poe_chat_config.json")
         else:
-            # スクリプトが実行されている場合
             script_dir = os.path.dirname(os.path.abspath(__file__))
             self.config_file = os.path.join(script_dir, "poe_chat_config.json")
-        
-        print(f"設定ファイルパス: {self.config_file}")  # デバッグ用
         
         self.config = self.load_config()
         self.tts_engine = None
         self.main_window = None
         self.settings_window = None
-        self.last_file_position = 0
+        self.ng_words_window = None
+        self.last_file_positions = {}
         self.tts_queue = queue.Queue()
         self.tts_thread = None
         self.font_size = self.config.get('font_size', 10)
         self.font_family = self.config.get('font_family', 'Consolas')
         self.message_ids = {}
         
-        # 監視状態管理
         self.monitoring_enabled = self.config.get('monitoring_enabled', True)
-        self.monitoring_thread = None
+        self.monitoring_threads = {}
         self.stop_monitoring = threading.Event()
         
-        # アップデート設定
         self.check_for_updates_on_startup = self.config.get('check_for_updates', True)
         
-        # 翻訳設定
         self.translation_service = self.config.get('translation_service', 'google')
         self.target_language = self.config.get('target_language', 'en')
         self.source_language = self.config.get('source_language', 'auto')
@@ -127,25 +74,66 @@ class PoEChatTool:
         
         self.voicevox_process = None
         
+        self.voicevox_speakers = {
+            'ずんだもん': {'ノーマル': 3, 'あまあま': 1, 'ツンツン': 7, 'セクシー': 5, 'ささヤキ': 22, 'ヒソヒソ': 38, 'ヘロヘロ': 75, 'なみだめ': 76},
+            '四国めたん': {'ノーマル': 2, 'あまあま': 0, 'ツンツン': 6, 'セクシー': 4, 'ささヤキ': 36, 'ヒソヒソ': 37},
+            '春日部つむぎ': {'ノーマル': 8},
+            '中国うさぎ': {'ノーマル': 61, 'おどろき': 62, 'こわがり': 63, 'へろへろ': 64},
+            '雨晴はう': {'ノーマル': 10},
+            '冥鳴ひまり': {'ノーマル': 14},
+            '東北ずん子': {'ノーマル': 107},
+            '東北きりたん': {'ノーマル': 108},
+            '東北イタコ': {'ノーマル': 109},
+            '栄田まめん': {'ノーマル': 67},
+            '波音リツ': {'ノーマル': 9, 'クイーン': 65},
+            '玄野武宏': {'ノーマル': 11, '喜び': 39, 'ツンギレ': 40, '悲しみ': 41},
+            '白上虎太郎': {'ふつう': 12, 'わーい': 32, 'びくびく': 33, 'おこ': 34, 'びえーん': 35},
+            '青山龍星': {'ノーマル': 13, '熱血': 81, '不機嫌': 82, '喜び': 83, 'しっとり': 84, 'かなしみ': 85, 'ささヤキ': 86},
+            '九州そら': {'ノーマル': 16, 'あまあま': 15, 'ツンツン': 18, 'セクシー': 17, 'ささヤキ': 19},
+            'もち子さん': {'ノーマル': 20, 'セクシー♡あん子': 66, '泣き': 77, '怒り': 78, '喜び': 79, 'のんびり': 80},
+            '剣崎雌雄': {'ノーマル': 21},
+            'WhiteCUL': {'ノーマル': 23, 'たのしい': 24, 'かなしい': 25, 'びえーん': 26},
+            '後鬼': {'人間ver.': 27, 'ぬいぐるみver.': 28, '人間（怒り）ver.': 87, '鬼ver.': 88},
+            'No.7': {'ノーマル': 29, 'アナウンス': 30, '読み聞かせ': 31},
+            'ちび式じい': {'ノーマル': 42},
+            '櫻歌ミコ': {'ノーマル': 43, '第二形態': 44, 'ロリ': 45},
+            '小夜/SAYO': {'ノーマル': 46},
+            'ナースロボ＿タイプＴ': {'ノーマル': 47, '楽々': 48, '恐怖': 49, '内緒話': 50},
+            '†聖騎士 紅桜†': {'ノーマル': 51},
+            '雀松朱司': {'ノーマル': 52},
+            '麒ヶ島宗麟': {'ノーマル': 53},
+            '春歌ナナ': {'ノーマル': 54},
+            '猫使アル': {'ノーマル': 55, 'おちつき': 56, 'うきうき': 57, 'つよつよ': 110, 'へろへろ': 111},
+            '猫使ビィ': {'ノーマル': 58, 'おちつき': 59, '人見知り': 60, 'つよつよ': 112},
+            'あいえるたん': {'ノーマル': 68},
+            '満別花丸': {'ノーマル': 69, '元気': 70, 'ささヤキ': 71, 'ぶりっ子': 72, 'ボーイ': 73},
+            '琴詠ニア': {'ノーマル': 74},
+            'Voidoll': {'ノーマル': 89},
+            'ずぼん子': {'ノーマル': 90, '低血圧': 91, '覚醒': 92, '実況風': 93},
+            '中部つるぎ': {'ノーマル': 94, '怒り': 95, 'ヒソヒソ': 96, 'おどおど': 97, '絶望と敗北': 98},
+            '離縁': {'ノーマル': 99, 'シリアス': 101},
+            '黒沢冴白': {'ノーマル': 100},
+            'ユーレイちゃん': {'ノーマル': 102, '甘々': 103, '哀しみ': 104, 'ささヤキ': 105, 'ツクモちゃん': 106}
+        }
+        
         self.init_tts()
         self.init_pygame()
         self.create_main_window()
         self.start_tts_thread()
         
-        # Windowsのタスクバーアイコン設定
         if os.name == 'nt':
             try:
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
             except AttributeError:
-                pass  # 古いWindowsバージョンではスキップ
-    
-        # VOICEVOX自動起動
+                pass
+        
         if self.config.get('auto_start_voicevox', False) and self.config.get('voicevox_path', ''):
             self.start_voicevox_if_needed()
     
     def load_config(self):
         default_config = {
             'log_file_path': '',
+            'log_file_path2': '',
             'enable_tts': True,
             'auto_scroll': True,
             'tts_engine': 'pyttsx3',
@@ -193,6 +181,12 @@ class PoEChatTool:
                 'x': 200,
                 'y': 200
             },
+            'ng_window_settings': {
+                'width': 600,
+                'height': 500,
+                'x': 300,
+                'y': 300
+            },
             'show_timestamp': True,
             'show_chat_type': True,
             'translation_service': 'google',
@@ -207,7 +201,12 @@ class PoEChatTool:
             'Webhook_webhook_url': '',
             'Webhook_message_format': '[{type}] {username}: {message}',
             'monitoring_enabled': True,
-            'check_for_updates': True
+            'check_for_updates': True,
+            'ng_words': [{'word': 'Ŵ', 'display': True, 'tts': True}, {'word': 'Ƈ', 'display': True, 'tts': True}],
+            'ng_word_display_filter': True,
+            'ng_word_tts_filter': True,
+            'spam_space_threshold': 7,
+            'spam_space_filter': False
         }
         
         if os.path.exists(self.config_file):
@@ -222,10 +221,8 @@ class PoEChatTool:
                             config['chat_colors'][chat_type] = default_config['chat_colors'][chat_type]
                     return config
             except Exception as e:
-                print(f"設定ファイル読み込みエラー: {e}")
                 messagebox.showerror("設定エラー", f"設定ファイルの読み込みに失敗しました:\n{e}")
         
-        # 設定ファイルがない場合はデフォルト設定を保存
         with open(self.config_file, 'w', encoding='utf-8') as f:
             json.dump(default_config, f, ensure_ascii=False, indent=2)
         return default_config
@@ -234,20 +231,17 @@ class PoEChatTool:
         self.config['auto_scroll'] = self.auto_scroll_var.get()
         self.config['enable_tts'] = self.tts_enabled_var.get()
         self.config['monitoring_enabled'] = self.monitoring_enabled
-        self.config['check_for_updates'] = self.check_for_updates_on_startup
         
         try:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"設定ファイル保存エラー: {e}")
             messagebox.showerror("保存エラー", f"設定の保存に失敗しました:\n{e}")
     
     def init_pygame(self):
         try:
             pygame.mixer.init()
         except Exception as e:
-            print(f"pygame初期化エラー: {e}")
             messagebox.showerror("初期化エラー", f"pygameの初期化に失敗しました:\n{e}")
     
     def init_tts(self):
@@ -256,7 +250,6 @@ class PoEChatTool:
             self.tts_engine.setProperty('rate', self.config['tts_rate'])
             self.tts_engine.setProperty('volume', self.config['tts_volume'])
         except Exception as e:
-            print(f"TTS初期化エラー: {e}")
             messagebox.showerror("TTSエラー", "TTSの初期化に失敗しました。TTS機能は無効になります。")
             self.config['enable_tts'] = False
     
@@ -271,7 +264,7 @@ class PoEChatTool:
                 icon_path = os.path.join(os.path.dirname(__file__), 'icon.ico')
             self.main_window.iconbitmap(icon_path)
         except Exception as e:
-            print(f"アイコン読み込みエラー: {e}")
+            pass
         
         self.auto_scroll_var = tk.BooleanVar(value=self.config.get('auto_scroll', True))
         self.tts_enabled_var = tk.BooleanVar(value=self.config.get('enable_tts', True))
@@ -283,38 +276,41 @@ class PoEChatTool:
         menubar = tk.Menu(self.main_window)
         self.main_window.config(menu=menubar)
         
-        # ファイルメニュー
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="ファイル", menu=file_menu)
         file_menu.add_command(label="設定", command=self.open_settings)
         file_menu.add_command(label="チャットクリア", command=self.clear_chat)
         file_menu.add_separator()
         file_menu.add_command(label="終了", command=self.close_main_window)
-                
-        # 監視メニュー
-        self.monitoring_menu_index = menubar.index("end") + 1
-        menubar.add_command(label="監視 [ON]", command=self.toggle_monitoring)
         
-        # 翻訳メニュー
+        self.source_lang_var = tk.StringVar(value=self.source_language)
         self.languages = [
             ('自動検出', 'auto'), ('英語', 'en'), ('日本語', 'ja'),
             ('韓国語', 'ko'), ('中国語', 'zh'), ('スペイン語', 'es'),
             ('フランス語', 'fr'), ('ドイツ語', 'de'), ('ロシア語', 'ru')
         ]
-        self.translation_menu_index = None
-
-        menubar.add_command(label="翻訳元 ▼", command=self.show_translation_popup)
-        self.translation_menu_index = menubar.index('end')
-
-        # TTSメニュー
+        self.translation_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="翻訳", menu=self.translation_menu)
+        
+        for name, code in self.languages:
+            self.translation_menu.add_radiobutton(
+                label=name,
+                variable=self.source_lang_var,
+                value=code,
+                command=lambda c=code: self.set_source_language(c)
+            )
+        
+        self.monitoring_menu_index = menubar.index("end") + 1
+        menubar.add_command(label="監視 [ON]", command=self.toggle_monitoring)
+        
         self.tts_menu_index = menubar.index('end') + 1
         menubar.add_command(label="読み上げ [ON]", command=self.toggle_tts)
         
-        # スクロールメニュー
         self.scroll_menu_index = menubar.index('end') + 1
         menubar.add_command(label="スクロール [ON]", command=self.toggle_auto_scroll)
         
-        # ヘルプメニュー (追加)
+        menubar.add_command(label="NG設定", command=self.open_ng_words_settings)
+        
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="ヘルプ", menu=help_menu)
         help_menu.add_command(label="アップデートを確認", command=lambda: self.check_for_updates(silent=False))
@@ -326,12 +322,10 @@ class PoEChatTool:
         status_frame = ttk.Frame(self.main_window)
         status_frame.pack(fill="x", padx=5, pady=2)
         
-        # ステータスバー
         self.status_var = tk.StringVar(value="監視: 実行中" if self.monitoring_enabled else "監視: 停止中")
         status_label = ttk.Label(status_frame, textvariable=self.status_var)
         status_label.pack(side="left", padx=5)
         
-        # バージョン表示 (追加)
         version_label = ttk.Label(status_frame, text=f"バージョン: {self.version}")
         version_label.pack(side="right", padx=5)
         
@@ -350,27 +344,258 @@ class PoEChatTool:
         self.chat_text.config(yscrollcommand=scrollbar.set)
         self.chat_text.pack(side="left", fill="both", expand=True)
         
+        self.context_menu = tk.Menu(self.chat_text, tearoff=0)
+        self.context_menu.add_command(label="NGワードに追加", command=self.add_selected_to_ng_words)
+        self.chat_text.bind("<Button-3>", self.show_context_menu)
+        
         self.update_chat_colors()
         
         self.chat_text.tag_config('translation_button', foreground='#00BFFF', underline=True)
         self.chat_text.tag_config('translation_result', foreground='#00FF00')
         self.chat_text.tag_config('update_url', foreground='#FFD700', underline=True)
         
-        # URLクリック用のバインド
         self.chat_text.tag_bind('update_url', '<Button-1>', self.open_update_url)
         self.chat_text.tag_bind('update_url', '<Enter>', lambda e: self.chat_text.config(cursor="hand2"))
         self.chat_text.tag_bind('update_url', '<Leave>', lambda e: self.chat_text.config(cursor=""))
             
-        # ログファイルがある場合、監視を開始
-        if self.config['log_file_path'] and os.path.exists(self.config['log_file_path']) and self.monitoring_enabled:
+        if self.monitoring_enabled:
             self.start_monitoring()
     
+    def show_context_menu(self, event):
+        try:
+            if self.chat_text.tag_ranges(tk.SEL):
+                self.context_menu.post(event.x_root, event.y_root)
+        except Exception as e:
+            pass
+    
+    def add_selected_to_ng_words(self):
+        try:
+            selected_text = self.chat_text.get(tk.SEL_FIRST, tk.SEL_LAST).strip()
+            if selected_text and not any(ng['word'] == selected_text for ng in self.config['ng_words']):
+                self.config['ng_words'].append({'word': selected_text, 'display': True, 'tts': True})
+                self.save_config()
+                self.display_system_message(f"NGワードに追加しました: {selected_text}")
+                if self.ng_words_window and self.ng_words_window.winfo_exists():
+                    self.refresh_ng_words_list()
+        except Exception as e:
+            pass
+    
+    def open_ng_words_settings(self):
+        if self.ng_words_window and self.ng_words_window.winfo_exists():
+            self.ng_words_window.lift()
+            return
+        self.create_ng_words_window()
+    
+    
+    def create_ng_words_window(self):
+        self.ng_words_window = tk.Toplevel(self.main_window)
+        self.ng_words_window.title("NGワード設定")
+        
+        ng_settings = self.config.get('ng_window_settings', {'width': 600, 'height': 500, 'x': 300, 'y': 300})
+        self.ng_words_window.geometry(f"{ng_settings['width']}x{ng_settings['height']}+{ng_settings['x']}+{ng_settings['y']}")
+        
+        self.ng_words_window.transient(self.main_window)
+        self.ng_words_window.grab_set()
+        self.ng_words_window.protocol("WM_DELETE_WINDOW", self.close_ng_words_window)
+        
+        main_frame = ttk.Frame(self.ng_words_window, padding="10")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        ttk.Label(main_frame, text="NGワードリスト（一致するメッセージはフィルターされます）").pack(anchor=tk.W)
+        
+        filter_frame = ttk.Frame(main_frame)
+        filter_frame.pack(fill=tk.X, pady=5)
+        
+        self.ng_word_display_var = tk.BooleanVar(value=self.config.get('ng_word_display_filter', False))
+        ttk.Checkbutton(filter_frame, text="NGワード表示フィルター", variable=self.ng_word_display_var,
+                       command=self.toggle_ng_word_display_filter).pack(side=tk.LEFT, padx=5)
+        
+        self.ng_word_tts_var = tk.BooleanVar(value=self.config.get('ng_word_tts_filter', False))
+        ttk.Checkbutton(filter_frame, text="NGワード読み上げフィルター", variable=self.ng_word_tts_var,
+                       command=self.toggle_ng_word_tts_filter).pack(side=tk.LEFT, padx=5)
+        
+        spam_frame = ttk.Frame(main_frame)
+        spam_frame.pack(fill=tk.X, pady=5)
+        
+        self.spam_space_var = tk.BooleanVar(value=self.config.get('spam_space_filter', False))
+        ttk.Checkbutton(spam_frame, text="スペーススパムフィルター", variable=self.spam_space_var,
+                       command=self.toggle_spam_space_filter).pack(side=tk.LEFT, padx=5)
+        
+        ttk.Label(spam_frame, text="閾値:").pack(side=tk.LEFT, padx=5)
+        self.spam_space_threshold_var = tk.IntVar(value=self.config.get('spam_space_threshold', 10))
+        threshold_spin = ttk.Spinbox(spam_frame, from_=5, to=50, width=5, textvariable=self.spam_space_threshold_var,
+                                    command=self.update_spam_space_threshold)
+        threshold_spin.pack(side=tk.LEFT, padx=5)
+        
+        ttk.Label(main_frame, text="※ON=フィルターをON(表示しない)　OFF=フィルターをOFF(表示する)").pack(anchor=tk.W, pady=5)
+        
+        list_frame = ttk.Frame(main_frame)
+        list_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        columns = ('word', 'display', 'tts')
+        self.ng_words_tree = ttk.Treeview(list_frame, columns=columns, show='headings', height=10)
+        
+        self.ng_words_tree.heading('word', text='NGワード')
+        self.ng_words_tree.heading('display', text='表示')
+        self.ng_words_tree.heading('tts', text='読み上げ')
+        
+        self.ng_words_tree.column('word', width=300)
+        self.ng_words_tree.column('display', width=80, anchor='center')
+        self.ng_words_tree.column('tts', width=80, anchor='center')
+        
+        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.ng_words_tree.yview)
+        self.ng_words_tree.configure(yscrollcommand=scrollbar.set)
+        
+        self.ng_words_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.ng_tree_context_menu = tk.Menu(self.ng_words_tree, tearoff=0)
+        self.ng_tree_context_menu.add_command(label="削除", command=self.remove_ng_word_from_tree)
+        self.ng_words_tree.bind("<Button-3>", self.show_ng_tree_context_menu)
+        
+        self.refresh_ng_words_list()
+        
+        self.ng_words_tree.bind('<ButtonRelease-1>', self.on_ng_word_click)
+        
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill=tk.X, pady=5)
+        
+        add_frame = ttk.Frame(button_frame)
+        add_frame.pack(fill=tk.X, pady=5)
+        
+        self.new_ng_word_var = tk.StringVar()
+        ttk.Entry(add_frame, textvariable=self.new_ng_word_var).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        ttk.Button(add_frame, text="追加", command=self.add_ng_word).pack(side=tk.RIGHT)
+        
+        ttk.Button(button_frame, text="選択項目を削除", command=self.remove_ng_word).pack(pady=5)
+        
+        ttk.Button(main_frame, text="閉じる", command=self.close_ng_words_window).pack(pady=5)
+    
+    def show_ng_tree_context_menu(self, event):
+        item = self.ng_words_tree.identify_row(event.y)
+        if item:
+            self.ng_words_tree.selection_set(item)
+            self.ng_tree_context_menu.post(event.x_root, event.y_root)
+    
+    def remove_ng_word_from_tree(self):
+        self.remove_ng_word()
+    
+    def refresh_ng_words_list(self):
+        for item in self.ng_words_tree.get_children():
+            self.ng_words_tree.delete(item)
+        
+        for ng_word in self.config['ng_words']:
+            self.ng_words_tree.insert('', 'end', values=(
+                ng_word['word'], 
+                'ON' if ng_word['display'] else 'OFF', 
+                'ON' if ng_word['tts'] else 'OFF'
+            ))
+    
+    def add_ng_word(self):
+        new_word = self.new_ng_word_var.get().strip()
+        if new_word and not any(ng['word'] == new_word for ng in self.config['ng_words']):
+            self.config['ng_words'].append({'word': new_word, 'display': True, 'tts': True})
+            self.ng_words_tree.insert('', 'end', values=(new_word, 'ON', 'ON'))
+            self.new_ng_word_var.set("")
+            self.save_config()
+            self.display_system_message(f"NGワードを追加しました: {new_word}")
+    
+    def close_ng_words_window(self):
+        if self.ng_words_window:
+            geometry = self.ng_words_window.geometry()
+            match = re.match(r'(\d+)x(\d+)\+(\d+)\+(\d+)', geometry)
+            if match:
+                w, h, x, y = map(int, match.groups())
+                self.config['ng_window_settings'] = {'width': w, 'height': h, 'x': x, 'y': y}
+                self.save_config()
+            
+            self.ng_words_window.destroy()
+            self.ng_words_window = None
+    
+    def on_ng_word_click(self, event):
+        item = self.ng_words_tree.selection()
+        if item:
+            column = self.ng_words_tree.identify_column(event.x)
+            if column == '#2':
+                self.toggle_ng_word_display(item[0])
+            elif column == '#3':
+                self.toggle_ng_word_tts(item[0])
+    
+    def toggle_ng_word_display(self, item_id):
+        item = self.ng_words_tree.item(item_id)
+        values = item['values']
+        word = values[0]
+        
+        for ng_word in self.config['ng_words']:
+            if ng_word['word'] == word:
+                ng_word['display'] = not ng_word['display']
+                self.ng_words_tree.set(item_id, 'display', 'ON' if ng_word['display'] else 'OFF')
+                self.save_config()
+                break
+    
+    def toggle_ng_word_tts(self, item_id):
+        item = self.ng_words_tree.item(item_id)
+        values = item['values']
+        word = values[0]
+        
+        for ng_word in self.config['ng_words']:
+            if ng_word['word'] == word:
+                ng_word['tts'] = not ng_word['tts']
+                self.ng_words_tree.set(item_id, 'tts', 'ON' if ng_word['tts'] else 'OFF')
+                self.save_config()
+                break
+    
+    def toggle_ng_word_display_filter(self):
+        self.config['ng_word_display_filter'] = self.ng_word_display_var.get()
+        self.save_config()
+        self.display_system_message(f"NGワード表示フィルター: {'ON' if self.config['ng_word_display_filter'] else 'OFF'}")
+    
+    def toggle_ng_word_tts_filter(self):
+        self.config['ng_word_tts_filter'] = self.ng_word_tts_var.get()
+        self.save_config()
+        self.display_system_message(f"NGワード読み上げフィルター: {'ON' if self.config['ng_word_tts_filter'] else 'OFF'}")
+    
+    def toggle_spam_space_filter(self):
+        self.config['spam_space_filter'] = self.spam_space_var.get()
+        self.save_config()
+        self.display_system_message(f"スペーススパムフィルター: {'ON' if self.config['spam_space_filter'] else 'OFF'}")
+    
+    def update_spam_space_threshold(self):
+        self.config['spam_space_threshold'] = self.spam_space_threshold_var.get()
+        self.save_config()
+    
+    def remove_ng_word(self):
+        selection = self.ng_words_tree.selection()
+        if selection:
+            item = self.ng_words_tree.item(selection[0])
+            word = item['values'][0]
+            self.ng_words_tree.delete(selection[0])
+            self.config['ng_words'] = [ng for ng in self.config['ng_words'] if ng['word'] != word]
+            self.save_config()
+            self.display_system_message(f"NGワードを削除しました: {word}")
+    
+    def is_ng_word(self, message, filter_type):
+        if not self.config.get(f'ng_word_{filter_type}_filter', False):
+            return False
+            
+        for ng_word in self.config['ng_words']:
+            if ng_word[filter_type] and ng_word['word'].lower() in message.lower():
+                return True
+        return False
+    
+    def is_spam_space(self, message):
+        if not self.config.get('spam_space_filter', False):
+            return False
+            
+        threshold = self.config.get('spam_space_threshold', 10)
+        space_count = message.count(' ')
+        return space_count >= threshold
+    
     def open_update_url(self, event=None):
-        """アップデートURLを開く"""
         try:
             webbrowser.open("https://github.com/ochi3/PoEChatTool/releases")
         except Exception as e:
-            print(f"URL表示エラー: {e}")
+            pass
     
     def toggle_monitoring(self):
         self.monitoring_enabled = not self.monitoring_enabled
@@ -381,6 +606,10 @@ class PoEChatTool:
             self.display_system_message("監視を開始しました")
         else:
             self.stop_monitoring.set()
+            for thread in self.monitoring_threads.values():
+                if thread and thread.is_alive():
+                    thread.join(timeout=1.0)
+            self.monitoring_threads.clear()
             self.status_var.set("監視: 停止中")
             self.display_system_message("監視を停止しました")
         
@@ -388,24 +617,78 @@ class PoEChatTool:
         self.save_config()
     
     def start_monitoring(self):
-        """監視を開始する"""
         if not self.monitoring_enabled:
             return
-            
-        if self.monitoring_thread and self.monitoring_thread.is_alive():
+        
+        self.stop_monitoring.set()
+        for thread in self.monitoring_threads.values():
+            if thread and thread.is_alive():
+                thread.join(timeout=1.0)
+        self.monitoring_threads.clear()
+        self.stop_monitoring.clear()
+        
+        log_files = [
+            ('log_file_path', 'PoE1'),
+            ('log_file_path2', 'PoE2')
+        ]
+        
+        for log_file_key, log_file_name in log_files:
+            log_path = self.config.get(log_file_key, '')
+            if log_path and os.path.exists(log_path):
+                try:
+                    with open(log_path, 'r', encoding='utf-8') as f:
+                        f.seek(0, 2)
+                        self.last_file_positions[log_file_key] = f.tell()
+                    
+                    thread = threading.Thread(
+                        target=self.monitor_log_file, 
+                        args=(log_file_key, log_file_name),
+                        daemon=True
+                    )
+                    self.monitoring_threads[log_file_key] = thread
+                    thread.start()
+                except Exception as e:
+                    self.display_system_message(f"{log_file_name} 監視開始エラー: {e}")
+    
+    def monitor_log_file(self, log_file_key, log_file_name):
+        log_path = self.config.get(log_file_key, '')
+        if not log_path or not os.path.exists(log_path):
             return
+        
+        while not self.stop_monitoring.is_set():
+            try:
+                with open(log_path, 'r', encoding='utf-8') as f:
+                    f.seek(self.last_file_positions.get(log_file_key, 0))
+                    new_lines = f.readlines()
+                    self.last_file_positions[log_file_key] = f.tell()
+                    
+                    for line in new_lines:
+                        line = line.strip()
+                        if line:
+                            self.process_log_line(line, log_file_name)
+            except Exception as e:
+                pass
+            time.sleep(0.5)
+    
+    def process_log_line(self, line, source_name):
+        chat_info = self.parse_chat_line(line)
+        if chat_info:
+            chat_info['source'] = source_name
             
-        try:
-            with open(self.config['log_file_path'], 'r', encoding='utf-8') as f:
-                f.seek(0, 2)
-                self.last_file_position = f.tell()
-            
-            self.stop_monitoring.clear()
-            self.monitoring_thread = threading.Thread(target=self.monitor_log_file, daemon=True)
-            self.monitoring_thread.start()
-        except Exception as e:
-            print(f"ファイル読み込みエラー: {e}")
-            self.display_system_message(f"監視開始エラー: {e}")
+            if self.is_ng_word(chat_info['message'], 'display'):
+                return
+                
+            if self.is_spam_space(chat_info['message']):
+                return
+                
+            chat_type = chat_info['type']
+            if self.config['chat_filter'].get(chat_type, True):
+                self.display_chat_message(chat_info)
+                if self.tts_enabled_var.get() and self.config['chat_tts_filter'].get(chat_type, True):
+                    if not self.is_ng_word(chat_info['message'], 'tts'):
+                        self.speak_message(chat_info['message'])
+                if self.config.get('enable_Webhook', False) and self.config.get('Webhook_webhook_url', ''):
+                    self.send_to_Webhook(chat_info)
     
     def update_chat_colors(self):
         for chat_type, color in self.chat_colors.items():
@@ -414,38 +697,22 @@ class PoEChatTool:
     def update_menu_labels(self):
         if self.menubar:
             try:
-                # 監視状態更新
                 monitoring_status = "ON" if self.monitoring_enabled else "OFF"
                 self.menubar.entryconfig(self.monitoring_menu_index, label=f"監視 [{monitoring_status}]")
                 
-                # TTS状態更新
                 tts_status = "ON" if self.tts_enabled_var.get() else "OFF"
                 self.menubar.entryconfig(self.tts_menu_index, label=f"読み上げ [{tts_status}]")
                 
-                # スクロール状態更新
                 scroll_status = "ON" if self.auto_scroll_var.get() else "OFF"
                 self.menubar.entryconfig(self.scroll_menu_index, label=f"スクロール [{scroll_status}]")
-                
-                # ソース言語表示更新
-                if self.menubar and self.translation_menu_index is not None:
-                    lang_name = next((name for name, code in self.languages if code == self.source_language), self.source_language)
-                    self.menubar.entryconfig(self.translation_menu_index, label=f"翻訳: {lang_name} ▼")
             except Exception as e:
-                print(f"メニュー更新エラー: {e}")
+                pass
 
-    def cycle_source_language(self):
-        """ソース言語を順番に切り替える"""
-        codes = [code for _, code in self.languages]
-        try:
-            idx = codes.index(self.source_language)
-            next_idx = (idx + 1) % len(codes)
-        except ValueError:
-            next_idx = 0
-        self.source_language = codes[next_idx]
-        self.config['source_language'] = self.source_language
+    def set_source_language(self, code):
+        self.source_language = code
+        self.config['source_language'] = code
         self.save_config()
-        self.update_menu_labels()
-        self.display_system_message(f"ソース言語を {self.source_language} に設定しました")
+        self.display_system_message(f"ソース言語を {code} に設定しました")
     
     def toggle_tts(self):
         self.tts_enabled_var.set(not self.tts_enabled_var.get())
@@ -477,18 +744,25 @@ class PoEChatTool:
         notebook = ttk.Notebook(self.settings_window)
         notebook.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # 一般タブ
         general_tab = ttk.Frame(notebook)
         notebook.add(general_tab, text="一般")
         
         log_frame = ttk.LabelFrame(general_tab, text="ログファイル設定")
         log_frame.pack(fill="x", padx=10, pady=5)
+        
+        ttk.Label(log_frame, text="PoE1 ログファイル:").pack(anchor="w")
         self.log_path_var = tk.StringVar(value=self.config['log_file_path'])
-        ttk.Label(log_frame, text="ログファイル:").pack(anchor="w")
         path_frame = ttk.Frame(log_frame)
         path_frame.pack(fill="x", pady=2)
         ttk.Entry(path_frame, textvariable=self.log_path_var, width=60).pack(side="left", fill="x", expand=True)
-        ttk.Button(path_frame, text="参照", command=self.browse_log_file).pack(side="right", padx=(5, 0))
+        ttk.Button(path_frame, text="参照", command=lambda: self.browse_log_file(self.log_path_var)).pack(side="right", padx=(5, 0))
+        
+        ttk.Label(log_frame, text="PoE2 ログファイル:").pack(anchor="w", pady=(5, 0))
+        self.log_path2_var = tk.StringVar(value=self.config.get('log_file_path2', ''))
+        path_frame2 = ttk.Frame(log_frame)
+        path_frame2.pack(fill="x", pady=2)
+        ttk.Entry(path_frame2, textvariable=self.log_path2_var, width=60).pack(side="left", fill="x", expand=True)
+        ttk.Button(path_frame2, text="参照", command=lambda: self.browse_log_file(self.log_path2_var)).pack(side="right", padx=(5, 0))
         
         font_frame = ttk.LabelFrame(general_tab, text="表示設定")
         font_frame.pack(fill="x", padx=10, pady=5)
@@ -527,7 +801,6 @@ class PoEChatTool:
         self.show_chat_type_var = tk.BooleanVar(value=self.config.get('show_chat_type', True))
         ttk.Checkbutton(font_frame, text="チャットタイプを表示", variable=self.show_chat_type_var).pack(anchor="w")
         
-        # アップデート設定を追加
         update_frame = ttk.LabelFrame(general_tab, text="アップデート設定")
         update_frame.pack(fill="x", padx=10, pady=5)
         
@@ -586,7 +859,76 @@ class PoEChatTool:
             reset_button = ttk.Button(row_frame, text="リセット", command=lambda ct=chat_type: self.reset_color(ct))
             reset_button.pack(side="left", padx=5)
         
-        # 読み上げタブ
+        ng_tab = ttk.Frame(notebook)
+        notebook.add(ng_tab, text="NG設定")
+        
+        ng_filter_frame = ttk.LabelFrame(ng_tab, text="NGワードフィルター設定")
+        ng_filter_frame.pack(fill="x", padx=10, pady=5)
+        
+        self.ng_word_display_filter_var = tk.BooleanVar(value=self.config.get('ng_word_display_filter', False))
+        ttk.Checkbutton(ng_filter_frame, text="NGワード表示フィルターを有効化", 
+                       variable=self.ng_word_display_filter_var).pack(anchor="w")
+        
+        self.ng_word_tts_filter_var = tk.BooleanVar(value=self.config.get('ng_word_tts_filter', False))
+        ttk.Checkbutton(ng_filter_frame, text="NGワード読み上げフィルターを有効化", 
+                       variable=self.ng_word_tts_filter_var).pack(anchor="w")
+        
+        spam_filter_frame = ttk.LabelFrame(ng_tab, text="スペーススパムフィルター設定")
+        spam_filter_frame.pack(fill="x", padx=10, pady=5)
+        
+        self.spam_space_filter_var = tk.BooleanVar(value=self.config.get('spam_space_filter', False))
+        ttk.Checkbutton(spam_filter_frame, text="スペーススパムフィルターを有効化", 
+                       variable=self.spam_space_filter_var).pack(anchor="w")
+        
+        ttk.Label(spam_filter_frame, text="スペース数の閾値:").pack(anchor="w", pady=(5, 0))
+        self.spam_space_threshold_var = tk.IntVar(value=self.config.get('spam_space_threshold', 10))
+        threshold_frame = ttk.Frame(spam_filter_frame)
+        threshold_frame.pack(fill="x")
+        ttk.Spinbox(threshold_frame, from_=5, to=50, textvariable=self.spam_space_threshold_var, width=10).pack(side="left")
+        ttk.Label(threshold_frame, text="文字以上のスペースを含むメッセージをフィルター").pack(side="left", padx=(5, 0))
+        
+        ttk.Label(ng_tab, text="　※ON=フィルターをON(表示しない)　OFF=フィルターをOFF(表示する)").pack(anchor=tk.W, pady=5)
+        
+        ng_list_frame = ttk.LabelFrame(ng_tab, text="NGワードリスト")
+        ng_list_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        columns = ('word', 'display', 'tts')
+        self.settings_ng_words_tree = ttk.Treeview(ng_list_frame, columns=columns, show='headings', height=10)
+        
+        self.settings_ng_words_tree.heading('word', text='NGワード')
+        self.settings_ng_words_tree.heading('display', text='表示')
+        self.settings_ng_words_tree.heading('tts', text='読み上げ')
+        
+        self.settings_ng_words_tree.column('word', width=300)
+        self.settings_ng_words_tree.column('display', width=80, anchor='center')
+        self.settings_ng_words_tree.column('tts', width=80, anchor='center')
+        
+        scrollbar = ttk.Scrollbar(ng_list_frame, orient=tk.VERTICAL, command=self.settings_ng_words_tree.yview)
+        self.settings_ng_words_tree.configure(yscrollcommand=scrollbar.set)
+        
+        self.settings_ng_words_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.settings_ng_tree_context_menu = tk.Menu(self.settings_ng_words_tree, tearoff=0)
+        self.settings_ng_tree_context_menu.add_command(label="削除", command=self.remove_ng_word_from_settings_tree)
+        self.settings_ng_words_tree.bind("<Button-3>", self.show_settings_ng_tree_context_menu)
+        
+        self.refresh_settings_ng_words_list()
+        
+        self.settings_ng_words_tree.bind('<ButtonRelease-1>', self.on_settings_ng_word_click)
+        
+        button_frame = ttk.Frame(ng_tab)
+        button_frame.pack(fill="x", padx=10, pady=5)
+        
+        add_frame = ttk.Frame(button_frame)
+        add_frame.pack(fill="x", pady=5)
+        
+        self.settings_new_ng_word_var = tk.StringVar()
+        ttk.Entry(add_frame, textvariable=self.settings_new_ng_word_var).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        ttk.Button(add_frame, text="追加", command=self.add_ng_word_from_settings).pack(side=tk.RIGHT)
+        
+        ttk.Button(button_frame, text="選択項目を削除", command=self.remove_ng_word_from_settings).pack(pady=5)
+        
         tts_tab = ttk.Frame(notebook)
         notebook.add(tts_tab, text="読み上げ")
         
@@ -617,49 +959,6 @@ class PoEChatTool:
         self.voicevox_url_var = tk.StringVar(value=self.config['voicevox_url'])
         ttk.Entry(voicevox_frame, textvariable=self.voicevox_url_var, width=40).pack(anchor="w")
         
-        # キャラクターとスタイルの選択
-        self.voicevox_speakers = {
-            'ずんだもん': {'ノーマル': 3, 'あまあま': 1, 'ツンツン': 7, 'セクシー': 5, 'ささやき': 22, 'ヒソヒソ': 38, 'ヘロヘロ': 75, 'なみだめ': 76},
-            '四国めたん': {'ノーマル': 2, 'あまあま': 0, 'ツンツン': 6, 'セクシー': 4, 'ささやき': 36, 'ヒソヒソ': 37},
-            '春日部つむぎ': {'ノーマル': 8},
-            '中国うさぎ': {'ノーマル': 61, 'おどろき': 62, 'こわがり': 63, 'へろへろ': 64},
-            '雨晴はう': {'ノーマル': 10},
-            '冥鳴ひまり': {'ノーマル': 14},
-            '東北ずん子': {'ノーマル': 107},
-            '東北きりたん': {'ノーマル': 108},
-            '東北イタコ': {'ノーマル': 109},
-            '栗田まろん': {'ノーマル': 67},
-            '波音リツ': {'ノーマル': 9, 'クイーン': 65},
-            '玄野武宏': {'ノーマル': 11, '喜び': 39, 'ツンギレ': 40, '悲しみ': 41},
-            '白上虎太郎': {'ふつう': 12, 'わーい': 32, 'びくびく': 33, 'おこ': 34, 'びえーん': 35},
-            '青山龍星': {'ノーマル': 13, '熱血': 81, '不機嫌': 82, '喜び': 83, 'しっとり': 84, 'かなしみ': 85, '囁き': 86},
-            '九州そら': {'ノーマル': 16, 'あまあま': 15, 'ツンツン': 18, 'セクシー': 17, 'ささやき': 19},
-            'もち子さん': {'ノーマル': 20, 'セクシー♡あん子': 66, '泣き': 77, '怒り': 78, '喜び': 79, 'のんびり': 80},
-            '剣崎雌雄': {'ノーマル': 21},
-            'WhiteCUL': {'ノーマル': 23, 'たのしい': 24, 'かなしい': 25, 'びえーん': 26},
-            '後鬼': {'人間ver.': 27, 'ぬいぐるみver.': 28, '人間（怒り）ver.': 87, '鬼ver.': 88},
-            'No.7': {'ノーマル': 29, 'アナウンス': 30, '読み聞かせ': 31},
-            'ちび式じい': {'ノーマル': 42},
-            '櫻歌ミコ': {'ノーマル': 43, '第二形態': 44, 'ロリ': 45},
-            '小夜/SAYO': {'ノーマル': 46},
-            'ナースロボ＿タイプＴ': {'ノーマル': 47, '楽々': 48, '恐怖': 49, '内緒話': 50},
-            '†聖騎士 紅桜†': {'ノーマル': 51},
-            '雀松朱司': {'ノーマル': 52},
-            '麒ヶ島宗麟': {'ノーマル': 53},
-            '春歌ナナ': {'ノーマル': 54},
-            '猫使アル': {'ノーマル': 55, 'おちつき': 56, 'うきうき': 57, 'つよつよ': 110, 'へろへろ': 111},
-            '猫使ビィ': {'ノーマル': 58, 'おちつき': 59, '人見知り': 60, 'つよつよ': 112},
-            'あいえるたん': {'ノーマル': 68},
-            '満別花丸': {'ノーマル': 69, '元気': 70, 'ささやき': 71, 'ぶりっ子': 72, 'ボーイ': 73},
-            '琴詠ニア': {'ノーマル': 74},
-            'Voidoll': {'ノーマル': 89},
-            'ずぼん子': {'ノーマル': 90, '低血圧': 91, '覚醒': 92, '実況風': 93},
-            '中部つるぎ': {'ノーマル': 94, '怒り': 95, 'ヒソヒソ': 96, 'おどおど': 97, '絶望と敗北': 98},
-            '離縁': {'ノーマル': 99, 'シリアス': 101},
-            '黒沢冴白': {'ノーマル': 100},
-            'ユーレイちゃん': {'ノーマル': 102, '甘々': 103, '哀しみ': 104, 'ささやき': 105, 'ツクモちゃん': 106}
-        }
-        
         current_character = self.config.get('voicevox_character', 'ずんだもん')
         current_style = self.config.get('voicevox_style', 'ノーマル')
 
@@ -681,7 +980,7 @@ class PoEChatTool:
                 self.voicevox_style_var.set(styles[0])
 
         self.voicevox_character_var.trace("w", update_style_combo)
-        update_style_combo()  # 初期更新
+        update_style_combo()
         if current_style in self.voicevox_speakers.get(current_character, {}):
             self.voicevox_style_var.set(current_style)
 
@@ -747,7 +1046,6 @@ class PoEChatTool:
                   length=250, command=lambda x: update_pyttsx_volume_label()).pack(side="left")
         self.tts_volume_var.trace("w", update_pyttsx_volume_label)
         
-        # 翻訳タブ
         translation_tab = ttk.Frame(notebook)
         notebook.add(translation_tab, text="翻訳")
         
@@ -797,7 +1095,6 @@ class PoEChatTool:
             variable=self.show_translation_buttons_var
         ).pack(anchor="w", pady=(5, 0))
         
-        # Webhook タブ
         Webhook_tab = ttk.Frame(notebook)
         notebook.add(Webhook_tab, text="Webhook")
         
@@ -818,12 +1115,87 @@ class PoEChatTool:
         format_entry.pack(anchor="w")
         ttk.Label(Webhook_frame, text="使用可能な変数: {timestamp}, {type}, {username}, {message}").pack(anchor="w")
         
-        # 保存とキャンセルボタン
         button_frame = ttk.Frame(self.settings_window)
         button_frame.pack(fill="x", padx=10, pady=10)
         ttk.Button(button_frame, text="保存", command=self.save_settings).pack(side="left")
         ttk.Button(button_frame, text="キャンセル", command=self.settings_window.destroy).pack(side="left", padx=(10, 0))
     
+    def show_settings_ng_tree_context_menu(self, event):
+        item = self.settings_ng_words_tree.identify_row(event.y)
+        if item:
+            self.settings_ng_words_tree.selection_set(item)
+            self.settings_ng_tree_context_menu.post(event.x_root, event.y_root)
+    
+    def remove_ng_word_from_settings_tree(self):
+        self.remove_ng_word_from_settings()
+    
+    def refresh_settings_ng_words_list(self):
+        for item in self.settings_ng_words_tree.get_children():
+            self.settings_ng_words_tree.delete(item)
+        
+        for ng_word in self.config['ng_words']:
+            self.settings_ng_words_tree.insert('', 'end', values=(
+                ng_word['word'], 
+                'ON' if ng_word['display'] else 'OFF', 
+                'ON' if ng_word['tts'] else 'OFF'
+            ))
+    
+    def on_settings_ng_word_click(self, event):
+        item = self.settings_ng_words_tree.selection()
+        if item:
+            column = self.settings_ng_words_tree.identify_column(event.x)
+            if column == '#2':
+                self.toggle_settings_ng_word_display(item[0])
+            elif column == '#3':
+                self.toggle_settings_ng_word_tts(item[0])
+    
+    def toggle_settings_ng_word_display(self, item_id):
+        item = self.settings_ng_words_tree.item(item_id)
+        values = item['values']
+        word = values[0]
+        
+        for ng_word in self.config['ng_words']:
+            if ng_word['word'] == word:
+                ng_word['display'] = not ng_word['display']
+                self.settings_ng_words_tree.set(item_id, 'display', 'ON' if ng_word['display'] else 'OFF')
+                self.save_config()
+                break
+    
+    def toggle_settings_ng_word_tts(self, item_id):
+        item = self.settings_ng_words_tree.item(item_id)
+        values = item['values']
+        word = values[0]
+        
+        for ng_word in self.config['ng_words']:
+            if ng_word['word'] == word:
+                ng_word['tts'] = not ng_word['tts']
+                self.settings_ng_words_tree.set(item_id, 'tts', 'ON' if ng_word['tts'] else 'OFF')
+                self.save_config()
+                break
+    
+    def add_ng_word_from_settings(self):
+        new_word = self.settings_new_ng_word_var.get().strip()
+        if new_word and not any(ng['word'] == new_word for ng in self.config['ng_words']):
+            self.config['ng_words'].append({'word': new_word, 'display': True, 'tts': True})
+            self.settings_ng_words_tree.insert('', 'end', values=(new_word, 'ON', 'ON'))
+            self.settings_new_ng_word_var.set("")
+            self.save_config()
+            
+            if self.ng_words_window and self.ng_words_window.winfo_exists():
+                self.refresh_ng_words_list()
+    
+    def remove_ng_word_from_settings(self):
+        selection = self.settings_ng_words_tree.selection()
+        if selection:
+            item = self.settings_ng_words_tree.item(selection[0])
+            word = item['values'][0]
+            self.settings_ng_words_tree.delete(selection[0])
+            self.config['ng_words'] = [ng for ng in self.config['ng_words'] if ng['word'] != word]
+            self.save_config()
+            
+            if self.ng_words_window and self.ng_words_window.winfo_exists():
+                self.refresh_ng_words_list()
+
     def update_font_combobox(self, event=None):
         search_term = self.font_search_var.get().lower()
         filtered_fonts = [font for font in self.font_families if search_term in font.lower()]
@@ -870,14 +1242,6 @@ class PoEChatTool:
     def test_voicevox_speech(self):
         test_text = "これはテスト音声です。"
         
-        # 現在の設定で直接合成
-        character = self.voicevox_character_var.get()
-        style = self.voicevox_style_var.get()
-        speed = self.voicevox_speed_scale_var.get()
-        volume = self.voicevox_volume_scale_var.get()
-        url = self.voicevox_url_var.get()
-        
-        # 一時的に設定を保存
         original_config = {
             'voicevox_character': self.config['voicevox_character'],
             'voicevox_style': self.config['voicevox_style'],
@@ -886,12 +1250,11 @@ class PoEChatTool:
             'voicevox_url': self.config['voicevox_url']
         }
         
-        # 現在の設定で上書き
-        self.config['voicevox_character'] = character
-        self.config['voicevox_style'] = style
-        self.config['voicevox_speed_scale'] = speed
-        self.config['voicevox_volume_scale'] = volume
-        self.config['voicevox_url'] = url
+        self.config['voicevox_character'] = self.voicevox_character_var.get()
+        self.config['voicevox_style'] = self.voicevox_style_var.get()
+        self.config['voicevox_speed_scale'] = self.voicevox_speed_scale_var.get()
+        self.config['voicevox_volume_scale'] = self.voicevox_volume_scale_var.get()
+        self.config['voicevox_url'] = self.voicevox_url_var.get()
         
         try:
             audio_data = self.synthesize_voicevox(test_text)
@@ -900,17 +1263,17 @@ class PoEChatTool:
             else:
                 messagebox.showerror("テスト音声", "テスト音声の合成に失敗しました。")
         finally:
-            # 元の設定に戻す
             self.config.update(original_config)
 
     
-    def browse_log_file(self):
-        file_path = filedialog.askopenfilename(title="PoEクライアントログファイルを選択", filetypes=[("ログファイル", "*.txt"), ("すべてのファイル", "*.*")])
+    def browse_log_file(self, path_var):
+        file_path = filedialog.askopenfilename(title="PoEクライアントログファイルを選択", filetypes=[("ログファイル", '*.txt'), ("すべてのファイル", "*.*")])
         if file_path:
-            self.log_path_var.set(file_path)
+            path_var.set(file_path)
     
     def save_settings(self):
         self.config['log_file_path'] = self.log_path_var.get()
+        self.config['log_file_path2'] = self.log_path2_var.get()
         self.config['tts_engine'] = self.tts_engine_var.get()
         self.config['voicevox_url'] = self.voicevox_url_var.get()
         self.config['voicevox_character'] = self.voicevox_character_var.get()
@@ -933,6 +1296,10 @@ class PoEChatTool:
         self.config['Webhook_message_format'] = self.Webhook_message_format_var.get()
         self.config['font_family'] = self.font_family_var.get()
         self.config['check_for_updates'] = self.check_updates_var.get()
+        self.config['ng_word_display_filter'] = self.ng_word_display_filter_var.get()
+        self.config['ng_word_tts_filter'] = self.ng_word_tts_filter_var.get()
+        self.config['spam_space_filter'] = self.spam_space_filter_var.get()
+        self.config['spam_space_threshold'] = self.spam_space_threshold_var.get()
         
         for chat_type in self.chat_filter_vars:
             self.config['chat_filter'][chat_type] = self.chat_filter_vars[chat_type].get()
@@ -968,7 +1335,6 @@ class PoEChatTool:
         messagebox.showinfo("保存完了", f"設定を保存しました。\nTTSエンジン: {self.config['tts_engine']}")
         self.settings_window.destroy()
         
-        # 監視設定が変更された場合の処理
         if self.config['log_file_path'] and os.path.exists(self.config['log_file_path']):
             if self.monitoring_enabled:
                 self.start_monitoring()
@@ -979,14 +1345,13 @@ class PoEChatTool:
             response = requests.get(f"{url}/speakers", timeout=1)
             return response.status_code == 200
         except Exception:
-            return False
+            return False 
     
     def start_voicevox_if_needed(self):
         if not self.is_voicevox_running():
             voicevox_path = self.config['voicevox_path']
             if os.path.exists(voicevox_path):
                 try:
-                    # VOICEVOXを隠して起動
                     startupinfo = subprocess.STARTUPINFO()
                     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                     startupinfo.wShowWindow = subprocess.SW_HIDE
@@ -1000,47 +1365,18 @@ class PoEChatTool:
                     for _ in range(30):
                         time.sleep(1)
                         if self.is_voicevox_running():
-                            print("VOICEVOXを自動起動しました")
                             self.display_system_message("VOICEVOXを自動起動しました")
                             return
-                    print("VOICEVOXの起動に失敗しました（タイムアウト）")
                 except Exception as e:
-                    print(f"VOICEVOX起動エラー: {e}")
+                    pass
             else:
-                print("VOICEVOXパスが無効です")
+                pass
         else:
-            print("VOICEVOXは既に起動しています")
             self.voicevox_process = None
     
     def clear_chat(self):
         self.chat_text.delete(1.0, tk.END)
         self.message_ids.clear()
-    
-    def monitor_log_file(self):
-        while not self.stop_monitoring.is_set():
-            try:
-                with open(self.config['log_file_path'], 'r', encoding='utf-8') as f:
-                    f.seek(self.last_file_position)
-                    new_lines = f.readlines()
-                    self.last_file_position = f.tell()
-                    for line in new_lines:
-                        line = line.strip()
-                        if line:
-                            self.process_log_line(line)
-            except Exception as e:
-                print(f"ログ監視エラー: {e}")
-            time.sleep(0.5)
-    
-    def process_log_line(self, line):
-        chat_info = self.parse_chat_line(line)
-        if chat_info:
-            chat_type = chat_info['type']
-            if self.config['chat_filter'].get(chat_type, True):
-                self.display_chat_message(chat_info)
-                if self.tts_enabled_var.get() and self.config['chat_tts_filter'].get(chat_type, True):
-                    self.speak_message(chat_info['message'])
-                if self.config.get('enable_Webhook', False) and self.config.get('Webhook_webhook_url', ''):
-                    self.send_to_Webhook(chat_info)
     
     def send_to_Webhook(self, chat_info):
         def send_thread():
@@ -1061,9 +1397,9 @@ class PoEChatTool:
                 data = {"content": message}
                 response = requests.post(webhook_url, json=data)
                 if response.status_code != 204:
-                    print(f"Webhook送信エラー: {response.status_code} - {response.text}")
+                    pass
             except Exception as e:
-                print(f"Webhook送信エラー: {e}")
+                pass
         
         threading.Thread(target=send_thread, daemon=True).start()
     
@@ -1114,7 +1450,7 @@ class PoEChatTool:
             if self.auto_scroll_var.get() and self.chat_text.yview()[1] >= 0.9:
                 self.chat_text.see(tk.END)
         except Exception as e:
-            print(f"システムメッセージ表示エラー: {e}")
+            pass
     
     def _display_message_thread_safe(self, chat_info):
         try:
@@ -1142,7 +1478,7 @@ class PoEChatTool:
 
             end_index = self.chat_text.index(tk.END)
 
-            self.chat_text.tag_add(message_id, start_index, f"{end_index}-1c")
+            self.chat_text.tag_add(message_id, start_index, end_index)
 
             self.chat_text.tag_bind(
                 message_id, 
@@ -1164,14 +1500,14 @@ class PoEChatTool:
             if self.auto_scroll_var.get() and self.chat_text.yview()[1] >= 0.9:
                 self.chat_text.see(tk.END)
         except Exception as e:
-            print(f"メッセージ表示エラー: {e}")
+            pass
 
     def translate_message(self, message_id):
         if message_id in self.message_ids:
             message = self.message_ids[message_id]
             threading.Thread(target=self._translate_message_thread, args=(message, message_id), daemon=True).start()
         else:
-            print(f"メッセージIDが見つかりません: {message_id}")
+            pass
 
     def _translate_message_thread(self, message, message_id):
         try:
@@ -1251,7 +1587,7 @@ class PoEChatTool:
                 if self.auto_scroll_var.get() and self.chat_text.yview()[1] >= 0.9:
                     self.chat_text.see(tk.END)
         except Exception as e:
-            print(f"翻訳結果表示エラー: {e}")
+            pass
 
     def synthesize_voicevox(self, text):
         try:
@@ -1273,7 +1609,6 @@ class PoEChatTool:
                 timeout=10
             )
             if query_response.status_code != 200:
-                print(f"VOICEVOX audio_queryエラー: ステータスコード {query_response.status_code}")
                 return None
             
             query_data = query_response.json()
@@ -1292,11 +1627,9 @@ class PoEChatTool:
                 pygame.mixer.music.set_volume(min(volume_scale / 2.0, 1.0))
                 return audio_data
             else:
-                print(f"VOICEVOX synthesisエラー: ステータスコード {synthesis_response.status_code}")
                 return None
         except Exception as e:
-            print(f"VOICEVOX合成エラー: {e}")
-        return None
+            return None
     
     def play_voicevox_audio(self, audio_data):
         temp_path = None
@@ -1312,7 +1645,7 @@ class PoEChatTool:
                 time.sleep(0.1)
         
         except Exception as e:
-            print(f"VOICEVOX再生エラー: {e}")
+            pass
         
         finally:
             if temp_path:
@@ -1324,7 +1657,6 @@ class PoEChatTool:
                     except PermissionError:
                         time.sleep(0.2)
                     except Exception as e:
-                        print(f"一時ファイル削除エラー: {e}")
                         break
     
     def start_tts_thread(self):
@@ -1351,7 +1683,7 @@ class PoEChatTool:
                         self.tts_engine.say(message)
                         self.tts_engine.runAndWait()
             except Exception as e:
-                print(f"TTSエラー: {e}")
+                pass
     
     def close_main_window(self):
         geometry = self.main_window.geometry()
@@ -1361,24 +1693,21 @@ class PoEChatTool:
             self.config['window_settings'] = {'width': w, 'height': h, 'x': x, 'y': y}
             self.save_config()
         
-        # 監視を停止
         self.stop_monitoring.set()
-        if self.monitoring_thread and self.monitoring_thread.is_alive():
-            self.monitoring_thread.join(timeout=2.0)
+        for thread in self.monitoring_threads.values():
+            if thread and thread.is_alive():
+                thread.join(timeout=2.0)
         
-        # TTSを停止
         if self.tts_queue:
             self.tts_queue.put(None)
         
-        # VOICEVOXを停止
         if self.voicevox_process:
             try:
                 self.voicevox_process.terminate()
                 self.voicevox_process.wait(timeout=5)
             except Exception as e:
-                print(f"VOICEVOX終了エラー: {e}")
+                pass
         
-        # 一時ファイルクリーンアップ
         temp_dir = tempfile.gettempdir()
         for file in os.listdir(temp_dir):
             if file.endswith('.wav'):
@@ -1391,9 +1720,7 @@ class PoEChatTool:
         self.main_window.destroy()
     
     def check_for_updates(self, silent=False):
-        """アップデートを確認する"""
         try:
-            # アップデート情報を取得するURL
             update_url = "https://raw.githubusercontent.com/ochi3/PoEChatTool/main/update.json"
             
             with urllib.request.urlopen(update_url, timeout=5) as response:
@@ -1403,15 +1730,13 @@ class PoEChatTool:
                     update_message = f"新しいバージョン {update_info['version']} が利用可能です。"
                     
                     if silent:
-                        # サイレントモードではURLと一緒に通知
                         self.display_system_message_with_url(update_message, "https://github.com/ochi3/PoEChatTool/releases")
                     else:
-                        # アップデート確認ダイアログ（URLを開くオプション付き）
                         result = messagebox.askyesnocancel(
                             "アップデートの確認",
                             f"{update_message}\n\nリリースページを開きますか？\n「はい」でページを開く、「いいえ」で閉じる"
                         )
-                        if result:  # はい
+                        if result:
                             webbrowser.open("https://github.com/ochi3/PoEChatTool/releases")
                 elif not silent:
                     messagebox.showinfo("アップデート", "お使いのバージョンは最新です")
@@ -1420,7 +1745,6 @@ class PoEChatTool:
                 messagebox.showerror("アップデートエラー", f"アップデートの確認に失敗しました:\n{str(e)}")
     
     def display_system_message_with_url(self, message, url):
-        """システムメッセージをクリック可能なURLと一緒に表示"""
         if not self.main_window:
             return
         self.main_window.after(0, self._display_system_message_with_url_thread_safe, message, url)
@@ -1434,17 +1758,15 @@ class PoEChatTool:
             self.chat_text.insert(tk.END, time_str, 'その他')
             self.chat_text.insert(tk.END, system_str, 'その他')
             
-            # URL部分を挿入
             url_start = self.chat_text.index(tk.END)
             self.chat_text.insert(tk.END, url_str, 'update_url')
             
             if self.auto_scroll_var.get() and self.chat_text.yview()[1] >= 0.9:
                 self.chat_text.see(tk.END)
         except Exception as e:
-            print(f"システムメッセージ表示エラー: {e}")
+            pass
     
     def show_version_info(self):
-        """バージョン情報を表示"""
         messagebox.showinfo(
             "バージョン情報",
             f"PoE Chat Tool\nバージョン: {self.version}\n\n"
@@ -1452,33 +1774,10 @@ class PoEChatTool:
         )
     
     def run(self):
-        # 起動時にアップデートを確認
         if self.check_for_updates_on_startup:
             threading.Thread(target=self.check_for_updates, args=(True,), daemon=True).start()
         
         self.main_window.mainloop()
-
-    def show_translation_popup(self):
-        """翻訳メニューをポップアップ表示し、言語選択できるようにする"""
-        popup = tk.Menu(self.main_window, tearoff=0)
-        for name, code in self.languages:
-            popup.add_radiobutton(
-                label=name,
-                value=code,
-                variable=tk.StringVar(value=self.source_language),
-                command=lambda c=code: self.set_source_language(c)
-            )
-        # マウスカーソルの位置に表示
-        x = self.main_window.winfo_pointerx()
-        y = self.main_window.winfo_rooty() + 30
-        popup.tk_popup(x, y)
-
-    def set_source_language(self, code):
-        self.source_language = code
-        self.config['source_language'] = code
-        self.save_config()
-        self.update_menu_labels()
-        self.display_system_message(f"ソース言語を {code} に設定しました")
 
 if __name__ == "__main__":
     try:
