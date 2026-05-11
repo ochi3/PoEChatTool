@@ -1,7 +1,6 @@
 {
-    "version": "1.0.3",
-    "release_date": "2025-08-21",
-    "changelog": "NGワード、スパム対策の設定を追加、PoE2用にログファイルを2個同時に設定できる用に変更。",
-    "download_url": "https://github.com/ochi3/PoEChatTool/releases/download/v1.0.3/poechat.zip"
-
+    "version": "1.0.4",
+    "release_date": "2026-05-11",
+    "changelog": "ダークモード、UIの改善、バグ修正、軽量化",
+    "download_url": "https://github.com/ochi3/PoEChatTool/releases/download/v1.0.4/poechat.zip"
 }

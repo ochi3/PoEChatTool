@@ -24,7 +24,7 @@ myappid = 'poechattool'
 
 class PoEChatTool:
     def __init__(self):
-        self.version = "1.0.3"
+        self.version = "1.0.4"
         if getattr(sys, 'frozen', False):
             script_dir = os.path.dirname(sys.executable)
             appdata_dir = os.getenv('APPDATA')
