@@ -41,6 +41,7 @@ class PoEChatTool:
         self.config = self.load_config()
         self.tts_engine = None
         self.main_window = None
+        self.chat_text = None
         self.settings_window = None
         self.ng_words_window = None
         self.last_file_positions = {}
@@ -49,6 +50,57 @@ class PoEChatTool:
         self.font_size = self.config.get('font_size', 10)
         self.font_family = self.config.get('font_family', 'Consolas')
         self.message_ids = {}
+        self.message_entry_tags = {}
+        self.displayed_entries = []
+        self.scrollable_canvases = []
+        self.missing_log_files = set()
+        self.max_log_messages = self.config.get('max_log_messages', 100)
+        self.theme_mode = self.config.get('theme_mode', 'dark')
+        self.theme_palettes = {
+            'dark': {
+                'window': '#111827',
+                'surface': '#182033',
+                'surface_alt': '#222c42',
+                'menu_bg': '#0b1020',
+                'menu_hover': '#182033',
+                'menu_border': '#263247',
+                'border': '#334155',
+                'text': '#e5e7eb',
+                'muted': '#94a3b8',
+                'accent': '#60a5fa',
+                'chat_bg': '#0b1020',
+                'chat_text': '#e5e7eb',
+                'chat_border': '#263247',
+                'selection': '#334155',
+                'tree_selection': '#334155',
+                'translation': '#38bdf8',
+                'translation_result': '#34d399',
+                'update': '#facc15'
+            },
+            'light': {
+                'window': '#f5f7fb',
+                'surface': '#ffffff',
+                'surface_alt': '#eef2f7',
+                'menu_bg': '#ffffff',
+                'menu_hover': '#eef2f7',
+                'menu_border': '#d9e2ec',
+                'border': '#d9e2ec',
+                'text': '#1f2937',
+                'muted': '#64748b',
+                'accent': '#2563eb',
+                'chat_bg': '#ffffff',
+                'chat_text': '#111827',
+                'chat_border': '#d9e2ec',
+                'selection': '#dbeafe',
+                'tree_selection': '#dbeafe',
+                'translation': '#0284c7',
+                'translation_result': '#047857',
+                'update': '#b45309'
+            }
+        }
+        if self.theme_mode not in self.theme_palettes:
+            self.theme_mode = 'dark'
+        self.palette = self.theme_palettes[self.theme_mode]
         
         self.monitoring_enabled = self.config.get('monitoring_enabled', True)
         self.monitoring_threads = {}
@@ -147,6 +199,8 @@ class PoEChatTool:
             'voicevox_volume_scale': 1.005,
             'font_size': 12,
             'font_family': 'Meiryo UI',
+            'theme_mode': 'dark',
+            'max_log_messages': 100,
             'chat_filter': {
                 'グローバル': True,
                 'パーティー': True,
@@ -208,20 +262,50 @@ class PoEChatTool:
             'spam_space_threshold': 7,
             'spam_space_filter': False
         }
+
+        def normalize_config(config):
+            for key, value in default_config.items():
+                if key not in config:
+                    config[key] = value
+            if not isinstance(config.get('chat_colors'), dict):
+                config['chat_colors'] = default_config['chat_colors'].copy()
+            if not isinstance(config.get('chat_filter'), dict):
+                config['chat_filter'] = default_config['chat_filter'].copy()
+            if not isinstance(config.get('chat_tts_filter'), dict):
+                config['chat_tts_filter'] = default_config['chat_tts_filter'].copy()
+            for chat_type in default_config['chat_colors']:
+                if chat_type not in config['chat_colors']:
+                    config['chat_colors'][chat_type] = default_config['chat_colors'][chat_type]
+                if chat_type in default_config['chat_filter'] and chat_type not in config['chat_filter']:
+                    config['chat_filter'][chat_type] = default_config['chat_filter'][chat_type]
+                if chat_type in default_config['chat_tts_filter'] and chat_type not in config['chat_tts_filter']:
+                    config['chat_tts_filter'][chat_type] = default_config['chat_tts_filter'][chat_type]
+            if not isinstance(config.get('ng_words'), list):
+                config['ng_words'] = default_config['ng_words']
+            try:
+                config['max_log_messages'] = max(1, int(config.get('max_log_messages', 100)))
+            except (TypeError, ValueError):
+                config['max_log_messages'] = default_config['max_log_messages']
+            return config
+
+        def backup_broken_config():
+            try:
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                backup_path = f"{self.config_file}.broken_{timestamp}.bak"
+                shutil.copy2(self.config_file, backup_path)
+            except Exception:
+                pass
         
         if os.path.exists(self.config_file):
             try:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     config = json.load(f)
-                    for key, value in default_config.items():
-                        if key not in config:
-                            config[key] = value
-                    for chat_type in default_config['chat_colors']:
-                        if chat_type not in config['chat_colors']:
-                            config['chat_colors'][chat_type] = default_config['chat_colors'][chat_type]
+                    config = normalize_config(config)
+                    with open(self.config_file, 'w', encoding='utf-8') as out_f:
+                        json.dump(config, out_f, ensure_ascii=False, indent=2)
                     return config
             except Exception as e:
-                messagebox.showerror("設定エラー", f"設定ファイルの読み込みに失敗しました:\n{e}")
+                backup_broken_config()
         
         with open(self.config_file, 'w', encoding='utf-8') as f:
             json.dump(default_config, f, ensure_ascii=False, indent=2)
@@ -231,6 +315,8 @@ class PoEChatTool:
         self.config['auto_scroll'] = self.auto_scroll_var.get()
         self.config['enable_tts'] = self.tts_enabled_var.get()
         self.config['monitoring_enabled'] = self.monitoring_enabled
+        self.config['theme_mode'] = self.theme_mode
+        self.config['max_log_messages'] = self.max_log_messages
         
         try:
             with open(self.config_file, 'w', encoding='utf-8') as f:
@@ -253,9 +339,279 @@ class PoEChatTool:
             messagebox.showerror("TTSエラー", "TTSの初期化に失敗しました。TTS機能は無効になります。")
             self.config['enable_tts'] = False
     
+    def configure_app_style(self):
+        palette = self.palette
+        self.main_window.configure(bg=palette['window'])
+
+        style = ttk.Style(self.main_window)
+        try:
+            style.theme_use('clam')
+        except tk.TclError:
+            pass
+
+        base_font = ('Meiryo UI', 9)
+        style.configure('.', font=base_font, background=palette['window'], foreground=palette['text'])
+        style.configure('TFrame', background=palette['window'])
+        style.configure('Surface.TFrame', background=palette['surface'])
+        style.configure('TLabel', background=palette['window'], foreground=palette['text'])
+
+        style.configure('TButton', padding=(12, 6), relief='flat', borderwidth=1,
+                        background=palette['surface'], foreground=palette['text'])
+        style.map('TButton',
+                  background=[('active', palette['surface_alt']), ('pressed', palette['border'])],
+                  foreground=[('disabled', palette['muted'])])
+
+        style.configure('TCheckbutton', background=palette['window'], foreground=palette['text'], padding=(2, 4))
+        style.map('TCheckbutton', background=[('active', palette['window'])])
+        style.configure('TRadiobutton', background=palette['window'], foreground=palette['text'], padding=(2, 4))
+        style.map('TRadiobutton', background=[('active', palette['window'])])
+
+        style.configure('TEntry', fieldbackground=palette['surface'], foreground=palette['text'],
+                        bordercolor=palette['border'], lightcolor=palette['border'],
+                        darkcolor=palette['border'], padding=(8, 5))
+        style.configure('TCombobox', fieldbackground=palette['surface'], foreground=palette['text'],
+                        bordercolor=palette['border'], arrowcolor=palette['muted'], padding=(8, 5))
+        style.map('TCombobox', fieldbackground=[('readonly', palette['surface'])])
+
+        style.configure('TNotebook', background=palette['window'], borderwidth=0)
+        style.configure('TNotebook.Tab', background=palette['surface_alt'], foreground=palette['muted'],
+                        padding=(14, 8), borderwidth=0)
+        style.map('TNotebook.Tab',
+                  background=[('selected', palette['surface']), ('active', palette['surface_alt'])],
+                  foreground=[('selected', palette['text']), ('active', palette['text'])])
+
+        style.configure('TLabelframe', background=palette['window'], bordercolor=palette['border'],
+                        relief='solid', padding=(12, 10))
+        style.configure('TLabelframe.Label', background=palette['window'], foreground=palette['muted'])
+
+        style.configure('Treeview', background=palette['surface'], fieldbackground=palette['surface'],
+                        foreground=palette['text'], bordercolor=palette['border'], rowheight=28)
+        style.configure('Treeview.Heading', background=palette['surface_alt'], foreground=palette['muted'],
+                        relief='flat', padding=(8, 6))
+        style.map('Treeview', background=[('selected', palette['tree_selection'])], foreground=[('selected', palette['text'])])
+
+        style.configure('Vertical.TScrollbar', background=palette['surface_alt'], troughcolor=palette['window'],
+                        bordercolor=palette['window'], arrowcolor=palette['muted'],
+                        lightcolor=palette['surface_alt'], darkcolor=palette['surface_alt'],
+                        gripcount=0, relief='flat', borderwidth=0)
+        style.map('Vertical.TScrollbar',
+                  background=[('active', palette['border']), ('pressed', palette['border'])],
+                  arrowcolor=[('active', palette['text']), ('pressed', palette['text'])])
+
+    def configure_menu_style(self, menu):
+        palette = self.palette
+        try:
+            menu.configure(
+                bg=palette['menu_bg'],
+                fg=palette['text'],
+                activebackground=palette['menu_hover'],
+                activeforeground=palette['text'],
+                selectcolor=palette['accent'],
+                relief='flat',
+                bd=0
+            )
+        except tk.TclError:
+            pass
+
+    def configure_custom_menu_bar_style(self):
+        if not getattr(self, 'menu_bar', None):
+            return
+
+        palette = self.palette
+        self.menu_bar.configure(
+            bg=palette['menu_bg'],
+            highlightbackground=palette['menu_border'],
+            highlightcolor=palette['menu_border']
+        )
+
+        for child in self.menu_bar.winfo_children():
+            try:
+                child.configure(
+                    bg=palette['menu_bg'],
+                    fg=palette['text'],
+                    activebackground=palette['menu_hover'],
+                    activeforeground=palette['text'],
+                    relief=tk.FLAT,
+                    bd=0,
+                    padx=10,
+                    pady=6,
+                    cursor="hand2"
+                )
+            except tk.TclError:
+                pass
+
+    def show_custom_menu(self, button, menu):
+        try:
+            menu.tk_popup(button.winfo_rootx(), button.winfo_rooty() + button.winfo_height())
+        finally:
+            try:
+                menu.grab_release()
+            except tk.TclError:
+                pass
+
+    def create_menu_button(self, parent, text, menu=None, command=None):
+        options = {
+            'text': text,
+            'bg': self.palette['menu_bg'],
+            'fg': self.palette['text'],
+            'activebackground': self.palette['menu_hover'],
+            'activeforeground': self.palette['text'],
+            'relief': tk.FLAT,
+            'bd': 0,
+            'padx': 10,
+            'pady': 6,
+            'cursor': "hand2",
+            'font': ('Meiryo UI', 9)
+        }
+
+        if menu is not None:
+            button = tk.Button(
+                parent,
+                command=lambda b=None: self.show_custom_menu(button, menu),
+                **options
+            )
+        else:
+            button = tk.Button(parent, command=command, **options)
+
+        button.pack(side=tk.LEFT)
+        return button
+
+    def configure_title_bar_style(self, window):
+        if os.name != 'nt' or not window:
+            return
+
+        try:
+            window.update_idletasks()
+            hwnd = ctypes.windll.user32.GetParent(window.winfo_id()) or window.winfo_id()
+            value = ctypes.c_int(1 if self.theme_mode == 'dark' else 0)
+            for attribute in (20, 19):
+                result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_void_p(hwnd),
+                    ctypes.c_int(attribute),
+                    ctypes.byref(value),
+                    ctypes.sizeof(value)
+                )
+                if result == 0:
+                    break
+        except Exception:
+            pass
+
+    def schedule_title_bar_style(self, window):
+        self.configure_title_bar_style(window)
+        try:
+            window.after(50, lambda: self.configure_title_bar_style(window))
+            window.after(250, lambda: self.configure_title_bar_style(window))
+        except tk.TclError:
+            pass
+
+    def create_scrollable_tab(self, notebook, title):
+        tab = ttk.Frame(notebook)
+        notebook.add(tab, text=title)
+
+        canvas = tk.Canvas(
+            tab,
+            bg=self.palette['window'],
+            highlightthickness=0,
+            bd=0
+        )
+        scrollbar = ttk.Scrollbar(
+            tab,
+            orient=tk.VERTICAL,
+            command=canvas.yview,
+            style='Vertical.TScrollbar'
+        )
+        content = ttk.Frame(canvas)
+        content_window = canvas.create_window((0, 0), window=content, anchor="nw")
+
+        def update_scrollregion(event=None):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        def fit_content_width(event):
+            canvas.itemconfigure(content_window, width=event.width)
+
+        def on_mousewheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        content.bind("<Configure>", update_scrollregion)
+        canvas.bind("<Configure>", fit_content_width)
+        canvas.bind("<Enter>", lambda event: canvas.bind_all("<MouseWheel>", on_mousewheel))
+        canvas.bind("<Leave>", lambda event: canvas.unbind_all("<MouseWheel>"))
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.scrollable_canvases.append(canvas)
+        return content
+
+    def configure_chat_text_style(self):
+        if not self.chat_text:
+            return
+
+        palette = self.palette
+        self.chat_text.configure(
+            bg=palette['chat_bg'],
+            fg=palette['chat_text'],
+            insertbackground=palette['chat_text'],
+            selectbackground=palette['selection'],
+            selectforeground=palette['chat_text'],
+            highlightbackground=palette['chat_border'],
+            highlightcolor=palette['accent']
+        )
+        self.chat_text.tag_config('message', foreground=palette['chat_text'])
+        self.chat_text.tag_config('translation_button', foreground=palette['translation'], underline=True)
+        self.chat_text.tag_config('translation_result', foreground=palette['translation_result'])
+        self.chat_text.tag_config('update_url', foreground=palette['update'], underline=True)
+        self.update_chat_colors()
+
+    def get_readable_chat_color(self, color):
+        if self.theme_mode == 'light' and color.lower() in ('#ffffff', 'white'):
+            return self.palette['chat_text']
+        return color
+
+    def apply_theme(self, mode=None, save=True):
+        if mode:
+            self.theme_mode = mode
+        if self.theme_mode not in self.theme_palettes:
+            self.theme_mode = 'dark'
+
+        self.palette = self.theme_palettes[self.theme_mode]
+        if hasattr(self, 'theme_var'):
+            self.theme_var.set(self.theme_mode)
+
+        if self.main_window:
+            self.configure_app_style()
+            self.schedule_title_bar_style(self.main_window)
+            self.configure_custom_menu_bar_style()
+        self.configure_chat_text_style()
+
+        for canvas in list(self.scrollable_canvases):
+            try:
+                if canvas.winfo_exists():
+                    canvas.configure(bg=self.palette['window'])
+            except tk.TclError:
+                self.scrollable_canvases.remove(canvas)
+
+        for window in (self.settings_window, self.ng_words_window):
+            try:
+                if window and window.winfo_exists():
+                    window.configure(bg=self.palette['window'])
+                    self.schedule_title_bar_style(window)
+            except tk.TclError:
+                pass
+
+        for menu_name in ('file_menu', 'theme_menu', 'translation_menu', 'help_menu', 'context_menu', 'ng_tree_context_menu', 'settings_ng_tree_context_menu'):
+            menu = getattr(self, menu_name, None)
+            if menu:
+                self.configure_menu_style(menu)
+
+        if save:
+            self.save_config()
+
     def create_main_window(self):
         self.main_window = tk.Tk()
+        self.configure_app_style()
         self.main_window.title(f"ぽえちゃっと v{self.version}")
+        self.schedule_title_bar_style(self.main_window)
         
         try:
             if getattr(sys, 'frozen', False):
@@ -268,20 +624,47 @@ class PoEChatTool:
         
         self.auto_scroll_var = tk.BooleanVar(value=self.config.get('auto_scroll', True))
         self.tts_enabled_var = tk.BooleanVar(value=self.config.get('enable_tts', True))
+        self.theme_var = tk.StringVar(value=self.theme_mode)
         
         w_settings = self.config['window_settings']
         self.main_window.geometry(f"{w_settings['width']}x{w_settings['height']}+{w_settings['x']}+{w_settings['y']}")
         self.main_window.protocol("WM_DELETE_WINDOW", self.close_main_window)
         
-        menubar = tk.Menu(self.main_window)
-        self.main_window.config(menu=menubar)
+        menubar = tk.Frame(
+            self.main_window,
+            bg=self.palette['menu_bg'],
+            bd=0,
+            highlightthickness=1,
+            highlightbackground=self.palette['menu_border']
+        )
+        menubar.pack(fill="x")
+        self.menu_bar = menubar
         
         file_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="ファイル", menu=file_menu)
+        self.configure_menu_style(file_menu)
         file_menu.add_command(label="設定", command=self.open_settings)
         file_menu.add_command(label="チャットクリア", command=self.clear_chat)
         file_menu.add_separator()
         file_menu.add_command(label="終了", command=self.close_main_window)
+        self.file_menu = file_menu
+        self.create_menu_button(menubar, "ファイル", menu=file_menu)
+
+        theme_menu = tk.Menu(menubar, tearoff=0)
+        self.configure_menu_style(theme_menu)
+        theme_menu.add_radiobutton(
+            label="ダークモード",
+            variable=self.theme_var,
+            value="dark",
+            command=lambda: self.apply_theme("dark")
+        )
+        theme_menu.add_radiobutton(
+            label="ライトモード",
+            variable=self.theme_var,
+            value="light",
+            command=lambda: self.apply_theme("light")
+        )
+        self.theme_menu = theme_menu
+        self.create_menu_button(menubar, "表示", menu=theme_menu)
         
         self.source_lang_var = tk.StringVar(value=self.source_language)
         self.languages = [
@@ -290,7 +673,8 @@ class PoEChatTool:
             ('フランス語', 'fr'), ('ドイツ語', 'de'), ('ロシア語', 'ru')
         ]
         self.translation_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="翻訳", menu=self.translation_menu)
+        self.configure_menu_style(self.translation_menu)
+        self.create_menu_button(menubar, "翻訳", menu=self.translation_menu)
         
         for name, code in self.languages:
             self.translation_menu.add_radiobutton(
@@ -300,59 +684,62 @@ class PoEChatTool:
                 command=lambda c=code: self.set_source_language(c)
             )
         
-        self.monitoring_menu_index = menubar.index("end") + 1
-        menubar.add_command(label="監視 [ON]", command=self.toggle_monitoring)
+        self.monitoring_button = self.create_menu_button(menubar, "監視 [ON]", command=self.toggle_monitoring)
         
-        self.tts_menu_index = menubar.index('end') + 1
-        menubar.add_command(label="読み上げ [ON]", command=self.toggle_tts)
+        self.tts_button = self.create_menu_button(menubar, "読み上げ [ON]", command=self.toggle_tts)
         
-        self.scroll_menu_index = menubar.index('end') + 1
-        menubar.add_command(label="スクロール [ON]", command=self.toggle_auto_scroll)
+        self.scroll_button = self.create_menu_button(menubar, "スクロール [ON]", command=self.toggle_auto_scroll)
         
-        menubar.add_command(label="NG設定", command=self.open_ng_words_settings)
+        self.create_menu_button(menubar, "NG設定", command=self.open_ng_words_settings)
         
         help_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="ヘルプ", menu=help_menu)
+        self.configure_menu_style(help_menu)
         help_menu.add_command(label="アップデートを確認", command=lambda: self.check_for_updates(silent=False))
         help_menu.add_command(label="バージョン情報", command=self.show_version_info)
+        self.help_menu = help_menu
+        self.create_menu_button(menubar, "ヘルプ", menu=help_menu)
         
         self.menubar = menubar
+        self.configure_custom_menu_bar_style()
         self.update_menu_labels()
         
-        status_frame = ttk.Frame(self.main_window)
-        status_frame.pack(fill="x", padx=5, pady=2)
-        
         self.status_var = tk.StringVar(value="監視: 実行中" if self.monitoring_enabled else "監視: 停止中")
-        status_label = ttk.Label(status_frame, textvariable=self.status_var)
-        status_label.pack(side="left", padx=5)
-        
-        version_label = ttk.Label(status_frame, text=f"バージョン: {self.version}")
-        version_label.pack(side="right", padx=5)
         
         chat_frame = ttk.Frame(self.main_window)
-        chat_frame.pack(fill="both", expand=True, padx=5, pady=2)
+        chat_frame.pack(fill="both", expand=True, padx=12, pady=12)
         
         self.chat_text = tk.Text(
             chat_frame, 
-            bg='black', 
-            fg='white', 
+            bg=self.palette['chat_bg'], 
+            fg=self.palette['chat_text'], 
+            insertbackground=self.palette['chat_text'],
+            selectbackground=self.palette['selection'],
+            selectforeground=self.palette['chat_text'],
             font=(self.font_family, self.font_size),
-            wrap=tk.WORD
+            wrap=tk.WORD,
+            relief=tk.FLAT,
+            bd=0,
+            padx=14,
+            pady=12,
+            spacing1=2,
+            spacing3=4,
+            highlightthickness=1,
+            highlightbackground=self.palette['chat_border'],
+            highlightcolor=self.palette['accent']
         )
-        scrollbar = ttk.Scrollbar(chat_frame, command=self.chat_text.yview)
+        scrollbar = ttk.Scrollbar(chat_frame, command=self.chat_text.yview, style='Vertical.TScrollbar')
         scrollbar.pack(side="right", fill="y")
         self.chat_text.config(yscrollcommand=scrollbar.set)
         self.chat_text.pack(side="left", fill="both", expand=True)
         
         self.context_menu = tk.Menu(self.chat_text, tearoff=0)
+        self.configure_menu_style(self.context_menu)
         self.context_menu.add_command(label="NGワードに追加", command=self.add_selected_to_ng_words)
         self.chat_text.bind("<Button-3>", self.show_context_menu)
         
         self.update_chat_colors()
         
-        self.chat_text.tag_config('translation_button', foreground='#00BFFF', underline=True)
-        self.chat_text.tag_config('translation_result', foreground='#00FF00')
-        self.chat_text.tag_config('update_url', foreground='#FFD700', underline=True)
+        self.configure_chat_text_style()
         
         self.chat_text.tag_bind('update_url', '<Button-1>', self.open_update_url)
         self.chat_text.tag_bind('update_url', '<Enter>', lambda e: self.chat_text.config(cursor="hand2"))
@@ -389,7 +776,10 @@ class PoEChatTool:
     
     def create_ng_words_window(self):
         self.ng_words_window = tk.Toplevel(self.main_window)
+        self.ng_words_window.withdraw()
+        self.ng_words_window.configure(bg=self.palette['window'])
         self.ng_words_window.title("NGワード設定")
+        self.schedule_title_bar_style(self.ng_words_window)
         
         ng_settings = self.config.get('ng_window_settings', {'width': 600, 'height': 500, 'x': 300, 'y': 300})
         self.ng_words_window.geometry(f"{ng_settings['width']}x{ng_settings['height']}+{ng_settings['x']}+{ng_settings['y']}")
@@ -443,13 +833,14 @@ class PoEChatTool:
         self.ng_words_tree.column('display', width=80, anchor='center')
         self.ng_words_tree.column('tts', width=80, anchor='center')
         
-        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.ng_words_tree.yview)
+        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.ng_words_tree.yview, style='Vertical.TScrollbar')
         self.ng_words_tree.configure(yscrollcommand=scrollbar.set)
         
         self.ng_words_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.ng_tree_context_menu = tk.Menu(self.ng_words_tree, tearoff=0)
+        self.configure_menu_style(self.ng_tree_context_menu)
         self.ng_tree_context_menu.add_command(label="削除", command=self.remove_ng_word_from_tree)
         self.ng_words_tree.bind("<Button-3>", self.show_ng_tree_context_menu)
         
@@ -470,6 +861,10 @@ class PoEChatTool:
         ttk.Button(button_frame, text="選択項目を削除", command=self.remove_ng_word).pack(pady=5)
         
         ttk.Button(main_frame, text="閉じる", command=self.close_ng_words_window).pack(pady=5)
+        self.schedule_title_bar_style(self.ng_words_window)
+        self.ng_words_window.deiconify()
+        self.ng_words_window.lift()
+        self.ng_words_window.focus_force()
     
     def show_ng_tree_context_menu(self, event):
         item = self.ng_words_tree.identify_row(event.y)
@@ -652,13 +1047,32 @@ class PoEChatTool:
     
     def monitor_log_file(self, log_file_key, log_file_name):
         log_path = self.config.get(log_file_key, '')
-        if not log_path or not os.path.exists(log_path):
+        if not log_path:
             return
         
         while not self.stop_monitoring.is_set():
             try:
+                if not os.path.exists(log_path):
+                    if log_file_key not in self.missing_log_files:
+                        self.missing_log_files.add(log_file_key)
+                        self.display_system_message(f"{log_file_name} のログファイルが見つかりません。再作成を待っています。")
+                    time.sleep(1.0)
+                    continue
+
+                if log_file_key in self.missing_log_files:
+                    self.missing_log_files.remove(log_file_key)
+                    self.last_file_positions[log_file_key] = 0
+                    self.display_system_message(f"{log_file_name} のログファイルを再検出しました。先頭から読み込みます。")
+
+                current_size = os.path.getsize(log_path)
+                last_position = self.last_file_positions.get(log_file_key, 0)
+                if last_position > current_size:
+                    last_position = 0
+                    self.last_file_positions[log_file_key] = 0
+                    self.display_system_message(f"{log_file_name} のログファイルが更新されたため、読み取り位置をリセットしました。")
+
                 with open(log_path, 'r', encoding='utf-8') as f:
-                    f.seek(self.last_file_positions.get(log_file_key, 0))
+                    f.seek(last_position)
                     new_lines = f.readlines()
                     self.last_file_positions[log_file_key] = f.tell()
                     
@@ -692,19 +1106,19 @@ class PoEChatTool:
     
     def update_chat_colors(self):
         for chat_type, color in self.chat_colors.items():
-            self.chat_text.tag_config(chat_type, foreground=color)
+            self.chat_text.tag_config(chat_type, foreground=self.get_readable_chat_color(color))
     
     def update_menu_labels(self):
         if self.menubar:
             try:
                 monitoring_status = "ON" if self.monitoring_enabled else "OFF"
-                self.menubar.entryconfig(self.monitoring_menu_index, label=f"監視 [{monitoring_status}]")
+                self.monitoring_button.configure(text=f"監視 [{monitoring_status}]")
                 
                 tts_status = "ON" if self.tts_enabled_var.get() else "OFF"
-                self.menubar.entryconfig(self.tts_menu_index, label=f"読み上げ [{tts_status}]")
+                self.tts_button.configure(text=f"読み上げ [{tts_status}]")
                 
                 scroll_status = "ON" if self.auto_scroll_var.get() else "OFF"
-                self.menubar.entryconfig(self.scroll_menu_index, label=f"スクロール [{scroll_status}]")
+                self.scroll_button.configure(text=f"スクロール [{scroll_status}]")
             except Exception as e:
                 pass
 
@@ -732,7 +1146,10 @@ class PoEChatTool:
     
     def create_settings_window(self):
         self.settings_window = tk.Toplevel(self.main_window)
+        self.settings_window.withdraw()
+        self.settings_window.configure(bg=self.palette['window'])
         self.settings_window.title("設定")
+        self.schedule_title_bar_style(self.settings_window)
         
         sw_settings = self.config.get('settings_window_settings', {'width': 600, 'height': 800, 'x': 200, 'y': 200})
         self.settings_window.geometry(f"{sw_settings['width']}x{sw_settings['height']}+{sw_settings['x']}+{sw_settings['y']}")
@@ -740,12 +1157,14 @@ class PoEChatTool:
         self.settings_window.transient(self.main_window)
         self.settings_window.grab_set()
         self.settings_window.protocol("WM_DELETE_WINDOW", self.close_settings_window)
+        self.settings_window.grid_rowconfigure(0, weight=1)
+        self.settings_window.grid_rowconfigure(1, weight=0)
+        self.settings_window.grid_columnconfigure(0, weight=1)
         
         notebook = ttk.Notebook(self.settings_window)
-        notebook.pack(fill="both", expand=True, padx=10, pady=10)
+        notebook.grid(row=0, column=0, sticky="nsew", padx=12, pady=12)
         
-        general_tab = ttk.Frame(notebook)
-        notebook.add(general_tab, text="一般")
+        general_tab = self.create_scrollable_tab(notebook, "一般")
         
         log_frame = ttk.LabelFrame(general_tab, text="ログファイル設定")
         log_frame.pack(fill="x", padx=10, pady=5)
@@ -770,6 +1189,11 @@ class PoEChatTool:
         self.font_size_var = tk.StringVar(value=str(self.config['font_size']))
         font_size_entry = ttk.Entry(font_frame, textvariable=self.font_size_var, width=10)
         font_size_entry.pack(anchor="w")
+
+        ttk.Label(font_frame, text="表示ログ上限:").pack(anchor="w", pady=(5, 0))
+        self.max_log_messages_var = tk.StringVar(value=str(self.config.get('max_log_messages', 100)))
+        max_log_messages_entry = ttk.Entry(font_frame, textvariable=self.max_log_messages_var, width=10)
+        max_log_messages_entry.pack(anchor="w")
         
         ttk.Label(font_frame, text="フォントファミリー:").pack(anchor="w", pady=(5, 0))
         self.font_family_var = tk.StringVar(value=self.config.get('font_family', 'Consolas'))
@@ -859,8 +1283,7 @@ class PoEChatTool:
             reset_button = ttk.Button(row_frame, text="リセット", command=lambda ct=chat_type: self.reset_color(ct))
             reset_button.pack(side="left", padx=5)
         
-        ng_tab = ttk.Frame(notebook)
-        notebook.add(ng_tab, text="NG設定")
+        ng_tab = self.create_scrollable_tab(notebook, "NG設定")
         
         ng_filter_frame = ttk.LabelFrame(ng_tab, text="NGワードフィルター設定")
         ng_filter_frame.pack(fill="x", padx=10, pady=5)
@@ -903,13 +1326,14 @@ class PoEChatTool:
         self.settings_ng_words_tree.column('display', width=80, anchor='center')
         self.settings_ng_words_tree.column('tts', width=80, anchor='center')
         
-        scrollbar = ttk.Scrollbar(ng_list_frame, orient=tk.VERTICAL, command=self.settings_ng_words_tree.yview)
+        scrollbar = ttk.Scrollbar(ng_list_frame, orient=tk.VERTICAL, command=self.settings_ng_words_tree.yview, style='Vertical.TScrollbar')
         self.settings_ng_words_tree.configure(yscrollcommand=scrollbar.set)
         
         self.settings_ng_words_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.settings_ng_tree_context_menu = tk.Menu(self.settings_ng_words_tree, tearoff=0)
+        self.configure_menu_style(self.settings_ng_tree_context_menu)
         self.settings_ng_tree_context_menu.add_command(label="削除", command=self.remove_ng_word_from_settings_tree)
         self.settings_ng_words_tree.bind("<Button-3>", self.show_settings_ng_tree_context_menu)
         
@@ -929,8 +1353,7 @@ class PoEChatTool:
         
         ttk.Button(button_frame, text="選択項目を削除", command=self.remove_ng_word_from_settings).pack(pady=5)
         
-        tts_tab = ttk.Frame(notebook)
-        notebook.add(tts_tab, text="読み上げ")
+        tts_tab = self.create_scrollable_tab(notebook, "読み上げ")
         
         tts_frame = ttk.LabelFrame(tts_tab, text="読み上げ設定")
         tts_frame.pack(fill="x", padx=10, pady=5)
@@ -1046,8 +1469,7 @@ class PoEChatTool:
                   length=250, command=lambda x: update_pyttsx_volume_label()).pack(side="left")
         self.tts_volume_var.trace("w", update_pyttsx_volume_label)
         
-        translation_tab = ttk.Frame(notebook)
-        notebook.add(translation_tab, text="翻訳")
+        translation_tab = self.create_scrollable_tab(notebook, "翻訳")
         
         translation_frame = ttk.LabelFrame(translation_tab, text="翻訳設定")
         translation_frame.pack(fill="x", padx=10, pady=5)
@@ -1095,8 +1517,7 @@ class PoEChatTool:
             variable=self.show_translation_buttons_var
         ).pack(anchor="w", pady=(5, 0))
         
-        Webhook_tab = ttk.Frame(notebook)
-        notebook.add(Webhook_tab, text="Webhook")
+        Webhook_tab = self.create_scrollable_tab(notebook, "Webhook")
         
         Webhook_frame = ttk.LabelFrame(Webhook_tab, text="Webhook設定")
         Webhook_frame.pack(fill="x", padx=10, pady=5)
@@ -1115,10 +1536,15 @@ class PoEChatTool:
         format_entry.pack(anchor="w")
         ttk.Label(Webhook_frame, text="使用可能な変数: {timestamp}, {type}, {username}, {message}").pack(anchor="w")
         
-        button_frame = ttk.Frame(self.settings_window)
-        button_frame.pack(fill="x", padx=10, pady=10)
-        ttk.Button(button_frame, text="保存", command=self.save_settings).pack(side="left")
-        ttk.Button(button_frame, text="キャンセル", command=self.settings_window.destroy).pack(side="left", padx=(10, 0))
+        button_frame = ttk.Frame(self.settings_window, style='Surface.TFrame', padding=(12, 10))
+        button_frame.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 12))
+        ttk.Button(button_frame, text="キャンセル", command=self.settings_window.destroy).pack(side="right")
+        ttk.Button(button_frame, text="保存", command=self.save_settings).pack(side="right", padx=(0, 10))
+        self.settings_window.bind("<Control-s>", lambda event: self.save_settings())
+        self.schedule_title_bar_style(self.settings_window)
+        self.settings_window.deiconify()
+        self.settings_window.lift()
+        self.settings_window.focus_force()
     
     def show_settings_ng_tree_context_menu(self, event):
         item = self.settings_ng_words_tree.identify_row(event.y)
@@ -1321,14 +1747,24 @@ class PoEChatTool:
             messagebox.showerror("エラー", "フォントサイズは数値を入力してください")
             return
 
+        try:
+            self.config['max_log_messages'] = max(1, int(self.max_log_messages_var.get()))
+        except ValueError:
+            messagebox.showerror("エラー", "表示ログ上限は数値を入力してください")
+            return
+
         self.font_size = self.config['font_size']
         self.font_family = self.config['font_family']
+        self.max_log_messages = self.config['max_log_messages']
+        self.chat_colors = self.config['chat_colors']
         self.chat_text.config(font=(self.font_family, self.font_size))
         
         self.source_language = self.config['source_language']
         self.update_menu_labels()
         
         self.update_chat_colors()
+        self.trim_chat_entries()
+        self.save_config()
         
         self.check_for_updates_on_startup = self.config['check_for_updates']
         
@@ -1377,6 +1813,31 @@ class PoEChatTool:
     def clear_chat(self):
         self.chat_text.delete(1.0, tk.END)
         self.message_ids.clear()
+        self.message_entry_tags.clear()
+        self.displayed_entries.clear()
+
+    def register_chat_entry(self, start_index, end_index, message_id=None):
+        entry_tag = f"entry_{uuid.uuid4().hex}"
+        self.chat_text.tag_add(entry_tag, start_index, end_index)
+        self.displayed_entries.append({'tag': entry_tag, 'message_id': message_id})
+        if message_id:
+            self.message_entry_tags[message_id] = entry_tag
+        self.trim_chat_entries()
+        return entry_tag
+
+    def trim_chat_entries(self):
+        limit = max(1, int(self.max_log_messages))
+        while len(self.displayed_entries) > limit:
+            entry = self.displayed_entries.pop(0)
+            tag = entry['tag']
+            message_id = entry.get('message_id')
+            ranges = self.chat_text.tag_ranges(tag)
+            if ranges:
+                self.chat_text.delete(ranges[0], ranges[-1])
+            self.chat_text.tag_delete(tag)
+            if message_id:
+                self.message_ids.pop(message_id, None)
+                self.message_entry_tags.pop(message_id, None)
     
     def send_to_Webhook(self, chat_info):
         def send_thread():
@@ -1444,8 +1905,11 @@ class PoEChatTool:
         try:
             time_str = f"[{datetime.now().strftime('%H:%M')}] " if self.config.get('show_timestamp', True) else ""
             system_str = f"[システム] {message}\n"
+            start_index = self.chat_text.index(tk.END)
             self.chat_text.insert(tk.END, time_str, 'その他')
             self.chat_text.insert(tk.END, system_str, 'その他')
+            end_index = self.chat_text.index(tk.END)
+            self.register_chat_entry(start_index, end_index)
             
             if self.auto_scroll_var.get() and self.chat_text.yview()[1] >= 0.9:
                 self.chat_text.see(tk.END)
@@ -1479,13 +1943,14 @@ class PoEChatTool:
             end_index = self.chat_text.index(tk.END)
 
             self.chat_text.tag_add(message_id, start_index, end_index)
+            self.register_chat_entry(start_index, end_index, message_id)
 
             self.chat_text.tag_bind(
                 message_id, 
                 '<Button-1>', 
                 lambda e, mid=message_id: self.translate_message(mid)
             )
-            self.chat_text.tag_configure('translation_button', foreground='#00BFFF', underline=True)
+            self.chat_text.tag_configure('translation_button', foreground=self.palette['translation'], underline=True)
             self.chat_text.tag_bind(
                 'translation_button', 
                 '<Enter>', 
@@ -1505,6 +1970,7 @@ class PoEChatTool:
     def translate_message(self, message_id):
         if message_id in self.message_ids:
             message = self.message_ids[message_id]
+            self._display_translation(message_id, "翻訳中...")
             threading.Thread(target=self._translate_message_thread, args=(message, message_id), daemon=True).start()
         else:
             pass
@@ -1521,6 +1987,8 @@ class PoEChatTool:
                 try:
                     from deep_translator import GoogleTranslator
                     translated = GoogleTranslator(source=source_lang, target=target_lang).translate(message)
+                except ImportError:
+                    translated = "翻訳エラー: Google翻訳に必要な deep-translator が未インストールです。pip install -r requirements.txt を実行してください。"
                 except Exception as e:
                     translated = f"翻訳エラー: {str(e)}"
             
@@ -1579,10 +2047,16 @@ class PoEChatTool:
     def _display_translation(self, message_id, translation):
         try:
             if self.chat_text.tag_ranges(message_id):
+                result_tag = f"translation_{message_id}"
+                ranges = self.chat_text.tag_ranges(result_tag)
+                for start, end in zip(ranges[0::2], ranges[1::2]):
+                    self.chat_text.delete(start, end)
+
+                entry_tag = self.message_entry_tags.get(message_id)
                 tag_end = self.chat_text.tag_ranges(message_id)[1]
                 end_index = self.chat_text.index(f"{tag_end} lineend +1c")
-                
-                self.chat_text.insert(end_index, f"[翻訳] {translation}\n", 'translation_result')
+                tags = ('translation_result', result_tag, entry_tag) if entry_tag else ('translation_result', result_tag)
+                self.chat_text.insert(end_index, f"[翻訳] {translation}\n", tags)
                 
                 if self.auto_scroll_var.get() and self.chat_text.yview()[1] >= 0.9:
                     self.chat_text.see(tk.END)
@@ -1755,11 +2229,14 @@ class PoEChatTool:
             system_str = f"[システム] {message} "
             url_str = "ダウンロードページを開く\n"
             
+            start_index = self.chat_text.index(tk.END)
             self.chat_text.insert(tk.END, time_str, 'その他')
             self.chat_text.insert(tk.END, system_str, 'その他')
             
             url_start = self.chat_text.index(tk.END)
             self.chat_text.insert(tk.END, url_str, 'update_url')
+            end_index = self.chat_text.index(tk.END)
+            self.register_chat_entry(start_index, end_index)
             
             if self.auto_scroll_var.get() and self.chat_text.yview()[1] >= 0.9:
                 self.chat_text.see(tk.END)
@@ -1784,10 +2261,11 @@ if __name__ == "__main__":
         import pyttsx3
         import requests
         import pygame
+        import deep_translator
     except ImportError as e:
         print(f"必要なライブラリがインストールされていません: {e}")
         print("以下のコマンドでインストールしてください:")
-        print("pip install pyttsx3 requests pygame")
+        print("pip install -r requirements.txt")
         exit(1)
     app = PoEChatTool()
     app.run()

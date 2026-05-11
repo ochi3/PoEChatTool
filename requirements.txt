@@ -1,4 +1,5 @@
-pyttsx3
-pygame
-requests
-deep-translator
+pyttsx3>=2.90
+requests>=2.31.0
+deep-translator>=1.11.4
+pygame-ce>=2.5.7
+pyinstaller>=6.0.0
